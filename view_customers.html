@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Customers</title>
+</head>
+<body>
+    <h1>Customers on Flight {{ flight_number }}</h1>
+    <div class="container">
+        <form action="/view_customers/<flight_number>" method="POST">
+            <input type="submit" value="View Customers">
+        </form>
+
+    {% if customers %}
+        <table>
+            <thead>
+                <tr>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                    <tr>
+                        <td>{{ customer[0] }}</td>
+                        <td>{{ customer[1] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No customers found for this flight.</p>
+    {% endif %}
+    <p><a href="{{ url_for('view_flightsAuth') }}">Back to Flights</a></p>
+</body>
+</html>

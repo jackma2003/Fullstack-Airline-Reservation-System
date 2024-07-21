@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Schedule Maintenance</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <!-- Make sure when planes are maintenance they cannot be assigned a flight-->
+    <h1>Schedule Maintenance</h1>
+    <div class="container">
+        <form action="/schedule_maintenanceAuth" method="POST">
+            <label for="airline_name">Airline Name:</label>
+            <input type="text" id="airline_name" name="airline_name" required><br>
+
+            <label for="airplane_id">Airplane ID:</label>
+            <input type="text" id="airplane_id" name="airplane_id" required><br>
+
+            <label for="maintenance_start">Maintenance Start:</label>
+            <input type="date" id="maintenance_start" name="maintenance_start" required><br>
+
+            <label for="maintenance_end">Maintenance End:</label>
+            <input type="date" id="maintenance_end" name="maintenance_end" required><br>
+
+            <input type="submit" value="Schedule Maintenance">
+        </form>
+        <div class="go-back">
+            <a href="/staff_home"><button>Go Back</button></a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add New Airplane</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Add New Airplane</h1>
+    <div class="container">
+        <form action="/add_airplaneAuth" method="POST">
+            <label for="airplane_id">Airplane ID:</label>
+            <input type="text" id="airplane_id" name="airplane_id" required><br>
+
+            <label for="airline_name">Airline Name:</label>
+            <input type="text" id="airline_name" name="airline_name" required><br>
+
+            <label for="seats">Number of Seats:</label>
+            <input type="number" id="seats" name="seats" required><br>
+
+            <label for="company">Company:</label>
+            <input type="text" id="company" name="company" required><br>
+
+            <label for="model">Model Number:</label>
+            <input type="number" id="model_num" name="model_num" required><br>
+
+            <label for="manu_date">Manufacturing Date:</label>
+            <input type="date" id="manu_date" name="manu_date" required><br>
+
+            <label for="age">Age:</label>
+            <input type="number" id="age" name="age" required><br>
+
+            <label for="maintenance_start">Maintenance Start:</label>
+            <input type="date" id="maintenance_start" name="maintenance_start" required><br>
+
+
+            <label for="maintenance_end">Maintenance End:</label>
+            <input type="date" id="maintenance_end" name="maintenance_end" required><br>
+
+            <input type="submit" value="Add Airplane">
+        </form>
+        <div class="go-back">
+            <a href="/staff_home"><button>Go Back</button></a>
+        </div>
+    </div>
+</body>
+</html>

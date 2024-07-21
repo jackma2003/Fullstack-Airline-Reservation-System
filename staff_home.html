@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Staff Home {{ first_name }}</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Staff Home</h1>
+    <div class="button-container">
+        <center><h2>View Flights</h2></center>
+        <center><a href="/view_flight">View Flight</a></center>
+
+        <center><h2>Create New Flight</h2></center>
+        <center><a href="/create_flight">Create Flight</a></center>
+
+        <center><h2>Change Flight Status</h2></center>
+        <center><a href="/change_flight_status">Change Status</a></center>
+        
+        <center><h2>Add Airplane</h2></center>
+        <center><a href="/add_airplane">Add Airplane</a></center>
+        
+        <center><h2>Add Airport</h2></center>
+        <center><a href="/add_airport">Add Airport</a></center>
+        
+        <center><h2>View Flight Ratings</h2></center>
+        <center><a href="/view_flight_rating">View Flight Rating</a></center>
+        
+        <center><h2>Schedule Maintenance</h2></center>
+        <center><a href="/schedule_maintenance">Schedule Maintenance</a></center>
+        
+        <center><h2>View Frequent Customers</h2></center>
+        <center><a href="/view_frequent_customer">View Frequent Customers</a></center>
+        
+        <center><h2>View Earned Revenue</h2></center>
+        <center><a href="/view_revenue">View Earned Revenue</a></center>
+        
+        <center><h2>Logout</h2></center>
+        <center><a href="/logoutStaff">Logout</a></center>
+    </div>
+</body>
+</html>
