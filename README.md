@@ -1,6 +1,7 @@
 # Fullstack Airline Reservation System
 
-A web application simulating real-life airline reservation systems.
+<p>A web application simulating real-life airline reservation systems.</p>
+<p>It is a locally hosted web application</p>
 
 ## Tech Stack
 
