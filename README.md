@@ -8,3 +8,4 @@ Fullstack web application that simulates real-life airline reservation systems.
 
 
 ## Project setup 
+<p>Local web server will be XAMPP with the GUI phpMyAdmin. Make sure MySQL Database running.</p>
