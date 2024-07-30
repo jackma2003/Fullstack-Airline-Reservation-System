@@ -58,8 +58,6 @@ python3 init.py
 Here's a revised version of your document:
 
 ```markdown
-# FullStack Airline Reservation System CRUD Features
-
 ## Public Features
 
 ### 1. Search for Future Flights
