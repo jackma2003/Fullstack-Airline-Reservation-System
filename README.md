@@ -41,18 +41,3 @@
    python3 init.py
    ```
 2. 🌐 Access the application at `http://127.0.0.1:5000`
-
----
-
-<p align="center">
-  Made with ❤️ by [Your Name]
-</p>
-
-This layout:
-- Uses emojis to make sections more visually appealing and easier to scan
-- Centers key information for better aesthetics
-- Uses a badge for the database schema link
-- Improves the visual hierarchy with horizontal lines and font styling
-- Adds a personal touch with the "Made with ❤️" footer
-
-You can further customize this to fit your preferences or add more sections as needed.
