@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add New Airport</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Add New Airport</h1>
+    <div class="container">
+        <form action="/add_airportAuth" method="POST">
+            <label for="airport_code">Airport Code:</label>
+            <input type="text" id="airport_code" name="airport_code" required><br>
+
+            <label for="airport_name">Airport Name:</label>
+            <input type="text" id="airport_name" name="airport_name" required><br>
+
+            <label for="city">City:</label>
+            <input type="text" id="city" name="city" required><br>
+
+            <label for="country">Country:</label>
+            <input type="text" id="country" name="country" required><br>
+
+            <label for="terminals">Number of Terminals:</label>
+            <input type="number" id="terminals" name="terminals" required><br>
+
+            <label for="airport_type">Airport Type:</label>
+            <select id="airport_type" name="airport_type" required>
+                <option value="domestic">Domestic</option>
+                <option value="international">International</option>
+                <option value="both">Both</option>
+            </select><br>
+
+            <input type="submit" value="Add Airport">
+        </form>
+        <div class="go-back">
+            <a href="/staff_home"><button>Go Back</button></a>
+        </div>
+    </div>
+</body>
+</html>

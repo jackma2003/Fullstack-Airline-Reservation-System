@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Available Flights</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Available Flights</h1>
+
+        {% if flights %}
+            <table class="flight-table">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Airline Name</th>
+                        <th>Airplane Name</th>
+                        <th>Flight Number</th>
+                        <th>Airplane ID</th>
+                        <th>Departure Date</th>
+                        <th>Departure Time</th>
+                        <th>Arrival Date</th>
+                        <th>Arrival Time</th>
+                        <th>Depart Airport</th>
+                        <th>Arrival Airport</th>
+                        {% if session.email %}
+                            <th>Action</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for flight in flights %}
+                        {% set flight_data = flight[0] if trip == "round-trip" else flight %}
+                        <tr>
+                            <td>{{ flight_data['flight_status'] }}</td>
+                            <td>{{ flight_data['airline_name'] }}</td>
+                            <td>{{ flight_data['airplane_name'] }}</td>
+                            <td>{{ flight_data['flight_number'] }}</td>
+                            <td>{{ flight_data['airplane_id'] }}</td>
+                            <td>{{ flight_data['depart_date'] }}</td>
+                            <td>{{ flight_data['depart_time'] }}</td>
+                            <td>{{ flight_data['arrival_date'] }}</td>
+                            <td>{{ flight_data['arrival_time'] }}</td>
+                            <td>{{ flight_data['depart_airport'] }}</td>
+                            <td>{{ flight_data['arrival_airport'] }}</td>
+                            {% if session.email %}
+                                <td><a href="{{ url_for('purchase', flight_number=flight_data['flight_number']) }}" class="btn-purchase">Purchase</a></td>
+                            {% endif %}
+                        </tr>
+                        {% if trip == "round-trip" %}
+                            <tr>
+                                <td>{{ flight[1]['flight_status'] }}</td>
+                                <td>{{ flight[1]['airline_name'] }}</td>
+                                <td>{{ flight[1]['airplane_name'] }}</td>
+                                <td>{{ flight[1]['flight_number'] }}</td>
+                                <td>{{ flight[1]['airplane_id'] }}</td>
+                                <td>{{ flight[1]['depart_date'] }}</td>
+                                <td>{{ flight[1]['depart_time'] }}</td>
+                                <td>{{ flight[1]['arrival_date'] }}</td>
+                                <td>{{ flight[1]['arrival_time'] }}</td>
+                                <td>{{ flight[1]['depart_airport'] }}</td>
+                                <td>{{ flight[1]['arrival_airport'] }}</td>
+                                {% if session.email %}
+                                    <td><a href="{{ url_for('purchase', flight_number=flight[1]['flight_number']) }}" class="btn-purchase">Purchase</a></td>
+                                {% endif %}
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="no-flights">{{ nothing }}</p>
+        {% endif %}
+    </div>
+</body>
+</html>

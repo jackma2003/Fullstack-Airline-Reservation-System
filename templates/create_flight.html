@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create New Flight</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Create New Flight</h1>
+    <div class="container">
+        <!-- Displays error if maintenance time overlaps flight period-->
+        {% if error %}
+        <div class="error-message">
+            <p>{{ error }}</p>
+        </div>
+        {% endif %}
+        <form action="/create_flightAuth" method="POST">
+            <label for="flight_number">Flight Number:</label>
+            <input type="text" id="flight_number" name="flight_number" required><br>
+            
+            <label for="airline_name">Airline Name:</label>
+            <input type="text" id="airline_name" name="airline_name" required><br>
+
+            <label for="depart_date">Departure Date:</label>
+            <input type="date" id="depart_date" name="depart_date" required></br>
+
+            <label for="depart_time">Departure Time:</label>
+            <input type="time" id="depart_time" name="depart_time" required></br>
+
+            <label for="airplane_name">Airplane Name:</label>
+            <input type="text" id="airplane_name" name="airplane_name" required></br>
+
+            <label for="airplane_id">Airplane ID:</label>
+            <input type="text" id="airplane_id" name="airplane_id" required></br>
+
+            <label for="arrival_time">Arrival Time:</label>
+            <input type="time" id="arrival_time" name="arrival_time" required></br>
+
+            <label for="arrival_date">Arrival Date:</label>
+            <input type="date" id="arrival_date" name="arrival_date" required></br>
+
+            <label for="base_price">Base Price:</label>
+            <input type="number" id="base_price" name="base_price" required></br>
+
+            <label for="flight_status">Flight Status:</label>
+            <select id="flight_status" name="flight_status" required>
+                <option value="on-time">on-time</option>
+                <option value="delayed">delayed</option>
+            </select></br>
+
+            <label for="depart_airport">Departure Airport:</label>
+            <select id="depart_airport" name="depart_airport" required>
+                <option value="JFK">JFK</option>
+                <option value="PVG">PVG</option>
+            </select><br>
+
+            <label for="arrival_airport">Arrival Airport:</label>
+            <select id="arrival_airport" name="arrival_airport" required>
+                <option value="JFK">JFK</option>
+                <option value="PVG">PVG</option>
+            </select><br>
+
+            <input type="submit" value="Create Flight">
+        </form>
+        <div class="go-back">
+            <a href="/staff_home"><button>Go Back</button></a>
+        </div>
+    </div>
+</body>
+</html>

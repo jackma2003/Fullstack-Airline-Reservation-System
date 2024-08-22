@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Tickets</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Purchase Tickets</h1>
+    <form action="/purchaseAuth" method='POST'>
+        <div class="purchase-container">
+            <div class="flight-search-container">
+                <label for="email">Email:</label>
+                {% if buy_another == 'Buy Another' %}
+                    <input type="text" id="email" name="email" value = "{{ email }}" required><br>
+                {% else %}
+                    <input type="text" id="email" name="email" required><br>
+                {% endif %}
+                <label for="first_name">First Name:</label>
+                <input type="text" id="first_name" name="first_name" required><br>
+                <label for="last_name">Last Name:</label>
+                <input type="text" id="last_name" name="last_name" required><br>
+                <label for="dob">Date of Birth:</label>
+                <input type="date" id="dob" name="dob" required><br>
+            </div>
+            <div class="flight-search-container">
+                {% if buy_another == 'Buy Another' %}
+                    <label for="card_type">Card Type:</label>
+                    <input type="text" id="card_type" name="card_type" value = "{{ card_type }}" required><br>
+                    <label for="card_name">Card Name:</label>
+                    <input type="text" id="card_name" name="card_name" value = "{{ card_name }}" required><br>
+                    <label for="card_num">Card Number:</label>
+                    <input type="text" id="card_num" name="card_num" value = "{{ card_num }}" required><br>
+                    <label for="exp_date">Expiration Date:</label>
+                    <input type="date" id="exp_date" name="exp_date" value = "{{ exp_date }}" required><br>
+                {% else %}
+                    <label for="card_type">Card Type:</label>
+                    <input type="text" id="card_type" name="card_type" required><br>
+                    <label for="card_name">Card Name:</label>
+                    <input type="text" id="card_name" name="card_name" required><br>
+                    <label for="card_num">Card Number:</label>
+                    <input type="text" id="card_num" name="card_num" required><br>
+                    <label for="exp_date">Expiration Date:</label>
+                    <input type="date" id="exp_date" name="exp_date" required><br>
+                {% endif %}
+            </div>
+
+        </div>
+        <div class="flight-search-container">
+            {% if flight_type == 'one-way' %}
+                <p>Flight Price: ${{ ticket_price }}</p>
+            {% else %}
+                <p>Departing Flight Price: ${{ depart_ticket_price }}</p>
+                <p>Returning Flight Price: ${{ return_ticket_price }}</p>
+                <p>Total: ${{ total }}</p>
+            {% endif %}
+            <input type="submit" name = "choice" value="Buy Another">
+            <input type="submit" name = "choice" value="CONFIRM PURCHASE">
+            </form>
+        </div>
+    </form>
+</body>
+</html>

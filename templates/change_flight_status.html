@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Change Flight Status</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Change Flight Status</h1>
+    <div class="container">
+        <form action="/change_flight_statusAuth" method="POST">
+            <label for="flight_number">Flight Number:</label>
+            <input type="text" id="flight_number" name="flight_number" required><br>
+
+            <label for="airline_name">Airline Name:</label>
+            <input type="text" id="airline_name" name="airline_name" required><br>
+
+            <label for="depart_date">Departure Date:</label>
+            <input type="date" id="depart_date" name="depart_date" required><br>
+
+            <label for="flight_status">Flight Status:</label>
+            <select id="flight_status" name="flight_status" required>
+                <option value="on-time">On-time</option>
+                <option value="delayed">Delayed</option>
+            </select><br>
+
+            <input type="submit" value="Change Status">
+        </form>
+        <div class="go-back">
+            <a href="/staff_home"><button>Go Back</button></a>
+        </div>
+    </div>
+</body>
+</html>

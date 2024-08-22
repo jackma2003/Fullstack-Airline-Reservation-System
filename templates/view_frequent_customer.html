@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Frequent Customers</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .customer-info {
+            margin-bottom: 10px;
+        }
+        .customer-name {
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        input[type="email"], input[type="submit"] {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        input[type="email"] {
+            width: 100%;
+            border: 1px solid #ddd;
+        }
+        input[type="submit"] {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #2980b9;
+        }
+        .go-back {
+            margin-top: 20px;
+        }
+        .go-back button {
+            background-color: #95a5a6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .go-back button:hover {
+            background-color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>View Frequent Customers</h1>
+
+        <div class="section">
+            <form action="/view_frequent_customersAuth" method="POST">
+                <input type="submit" value="View Most Frequent Customer">
+            </form>
+
+            {% if most_frequent_customer %}
+                <h2>Most Frequent Customer (Last Year)</h2>
+                <div class="customer-info">
+                    <p><span class="customer-name">Name:</span> {{ most_frequent_customer.first_name }} {{ most_frequent_customer.last_name }}</p>
+                    <p><span class="customer-name">Number of Flights:</span> {{ most_frequent_customer.num_flights }}</p>
+                </div>
+            {% else %}
+                <p>No frequent customers found.</p>
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <h2>View Customer Flights</h2>
+            <form action="/view_customer_flights" method="POST">
+                <label for="customer_email">Customer Email:</label>
+                <input type="email" id="customer_email" name="customer_email" required>
+                <input type="submit" value="View Flights">
+            </form>
+
+            {% if customer_flights %}
+                <h3>Flights Taken by {{ customer_flights[0].first_name }} {{ customer_flights[0].last_name }}</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Flight Number</th>
+                            <th>Departure Date</th>
+                            <th>Departure Time</th>
+                            <th>Arrival Date</th>
+                            <th>Arrival Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for flight in customer_flights %}
+                            <tr>
+                                <td>{{ flight.flight_number }}</td>
+                                <td>{{ flight.depart_date }}</td>
+                                <td>{{ flight.depart_time }}</td>
+                                <td>{{ flight.arrival_date }}</td>
+                                <td>{{ flight.arrival_time }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </div>
+
+        <div class="go-back">
+            <a href="/staff_home"><button>Go Back</button></a>
+        </div>
+    </div>
+</body>
+</html>

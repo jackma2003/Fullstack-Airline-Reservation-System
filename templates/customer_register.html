@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer Registration</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Customer Registration</h1>
+    <form action="/registerAuth" method="POST">
+        <input type="text" name="email" placeholder="Email" required/><br>
+        <input type="password" name="password" placeholder="Password" required/><br>
+        <input type="text" name="first_name" placeholder="First Name" required/><br>
+        <input type="text" name="last_name" placeholder="Last Name" required/><br>
+        <input type="text" name="building_num" placeholder="Building Number" required/><br>
+        <input type="text" name="street" placeholder="Street" required/><br>
+        <input type="text" name="apt_num" placeholder="Apartment Number" required/><br>
+        <input type="text" name="city" placeholder="City" required/><br>
+        <input type="text" name="state" placeholder="State" required/><br>
+        <input type="text" name="zip-code" placeholder="Zip-Code" required/><br>
+        <input type="text" name="pass_num" placeholder="Passport Number" required/><br>
+        <p>Passport Expiration</p>
+        <input type="date" name="pass_exp" required/><br>
+        <input type="text" name="pass_country" placeholder="Passport Country" required/><br>
+        <p>Date Of Birth</p>
+        <input type="date" name="dob" required/><br>
+        <input type="submit" value="Register"/>
+        <!-- Error handling -->
+        {% if error %}
+        <p class="error"><strong>Error:</strong> {{error}}</p>
+        {% endif %}
+    </form>
+    <div class="go-back">
+        <a href="/"><button>Go back</button></a>
+    </div>
+</body>
+</html>

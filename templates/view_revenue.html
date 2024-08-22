@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Earned Revenue</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>View Earned Revenue</h1>
+    <div class="container">
+        <!-- Display the total revenue earned in the last month and last year -->
+        <p>Revenue (Last Month): ${{ revenue_last_month }}</p>
+        <p>Revenue (Last Year): ${{ revenue_last_year }}</p>
+    </div>
+    <div class="go-back">
+        <a href="/staff_home"><button>Go Back</button></a>
+    </div>
+</body>
+</html>

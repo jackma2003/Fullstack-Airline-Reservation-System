@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Staff Registration</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Staff Registration</h1>
+    <form action="/registerAuthStaff" method="POST">
+        <input type="text" name="username" placeholder="Username" required/><br>
+        <input type="password" name="password" placeholder="Password" required/><br>
+        <input type="text" name="first_name" placeholder="First Name" required/><br>
+        <input type="text" name="last_name" placeholder="Last Name" required/><br>
+        <p>Date Of Birth</p>
+        <input type="date" name="dob" placeholder="Date Of Birth" required/><br>
+        <input type="text" name="airline_name" placeholder="Airline Name" required/><br>
+        <input type="submit" value="Register"/>
+        <!-- Error handling -->
+        {% if error %}
+        <p class="error"><strong>Error:</strong> {{error}}</p>
+        {% endif %}
+    </form>
+    <div class="go-back">
+        <a href="/"><button>Go back</button></a>
+    </div>
+</body>
+</html>

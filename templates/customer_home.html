@@ -1,0 +1,100 @@
+<!-- Customer Home should have view flights, search flights, purchase tickets, cancel trip, give ratings and comment on prev flight, track spending, logout -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer Home</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <form action="/customer_home" method="POST">
+    <h1>Welcome Back, {{first_name}}</h1>
+    </form>
+    <div class="container">
+        <h2>My Flights</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Ticket ID</th>
+                    <th>Airline</th>
+                    <th>Flight Number</th>
+                    <th>Departure Date</th>
+                    <th>Departure Time</th>
+                    <th>Departure Airport</th>
+                    <th>Arrival Airport</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flight in flights %}
+                    <tr>
+                        <td>{{ flight.ticket_id }}</td>
+                        <td>{{ flight.airline_name }}</td>
+                        <td>{{ flight.flight_number }}</td>
+                        <td>{{ flight.depart_date }}</td>
+                        <td>{{ flight.depart_time }}</td>
+                        <td>{{ flight.depart_airport }}</td>
+                        <td>{{ flight.arrival_airport }}</td>
+                        <td>
+                            <form action = "/cancel_trip" method='GET'>
+                                <!--shortcut way to make sure specified gets passed through with button click-->
+                                <input type="hidden" name = "ticket_id" value="{{ flight.ticket_id }}">
+                                <input type="hidden" name = "airline_name" value="{{ flight.airline_name }}">
+                                <input type="hidden" name = "flight_number" value="{{ flight.flight_number }}">
+                                <input type="hidden" name = "depart_date" value="{{ flight.depart_date }}">
+                                <input type="hidden" name = "depart_time" value="{{ flight.depart_time }}">
+                                <input type="hidden" name = "depart_airpoort" value="{{ flight.depart_airport }}">
+                                <input type="hidden" name = "arrival_airport" value="{{ flight.arrival_airport }}">
+                                <input type="submit" class="cancel" value = Cancel></input>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>Search Flights</h2>
+        <form action="/flights" method="POST" class="search-form">
+            <label for="flight">Flight Type</label>
+            <input type="radio" name="flight_type" value="one-way" onchange='toggleReturn()' checked> One-way
+            <input type="radio" name="flight_type" value="round-trip" onchange='toggleReturn()'> Round-trip
+            <br>
+            <br>
+
+            <label for="source">Source Airport:</label>
+            <input type="text" id="source" name="source" required><br>
+            
+            <label for="destination">Destination Airport:</label>
+            <input type="text" id="destination" name="destination" required><br>
+            
+            <label for="depart_date">Departure Date:</label>
+            <input type="date" id="depart_date" name="departure_date" required><br>
+            
+            <label for="return_date">Return Date (optional):</label>
+            <input type="date" id="return_date" name="return_date" disabled><br>
+            
+            <input type="submit" value="Search Flights">
+        </form>
+
+    <div class="customer-action-buttons">
+        <a href="/give_ratings_commentsAuth" class="button">Rate and Comment on Previous Flights</a>
+        <a href="/track_spending" class="button">View Spending Report</a>
+        <a href="/logout" class="button">Logout</a>
+    </div>
+    </div>
+    <!-- Disabled Return Date Field if One Way Trip -->
+    <script>
+        function toggleReturn() {
+            const choice = document.querySelector('input[name="flight_type"]:checked');
+            const return_field = document.getElementById('return_date');
+
+            if (choice.value == "round-trip") {
+                return_field.disabled = false;
+            } 
+            else {
+                return_field.disabled = true;
+            }
+        }
+    </script>
+</body>
+</html>

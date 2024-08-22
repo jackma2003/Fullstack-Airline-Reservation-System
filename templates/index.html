@@ -1,0 +1,69 @@
+<!-- Home page should search for future flights based on source city/airport name, destination city/airport name, departure date for one way (departure and return dates for round trip)-->
+<!-- flight status based on airline name, flight num, arrival/departure regardless whether login or not-->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Air Ticket Reservation System</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Air Ticket Reservation System</h1>
+    <div class="button-container">
+        <a href="/customer_login">Customer Login</a>
+        <a href="/customer_register">Customer Register</a>
+        <a href="/staff_login">Staff Login</a>
+        <a href="/staff_register">Staff Register</a>
+    </div>
+    <!-- Flight Search Table -->
+
+    <div class="flight-search-container">
+        <h2>Flight Search</h2>
+        <form action="/flights" method='POST'>
+            <table>
+                <tr>
+                    <th>Flight Type</th>
+                    <td>
+                    <input type="radio" name="flight_type" value="one-way" onchange='toggleReturn()' checked> One-way
+                    <input type="radio" name="flight_type" value="round-trip" onchange='toggleReturn()'> Round-trip
+                    </td>
+                </tr>
+                <tr>
+                    <th>Origin Airport</th>
+                    <td><input type="text" name="source" required></td>
+                </tr>
+                <tr>
+                    <th>Destination Airport</th>
+                    <td><input type="text" name="destination" required></td>
+                </tr>
+                <tr>
+                    <th>Departure Date</th>
+                    <td><input type="date" name="departure_date" required></td>
+                </tr>
+                <tr>
+                    <th>Return Date (Round Trip Only)</th>
+                    <td><input type="date" id="return_field" name="return_date" disabled></td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="text-align: right;"><input type="submit" value="Search Flights"></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+        
+    <!-- Disabled Return Date Field if One Way Trip -->
+    <script>
+        function toggleReturn() {
+            const choice = document.querySelector('input[name="flight_type"]:checked');
+            const return_field = document.getElementById('return_field');
+
+            if (choice.value == "round-trip") {
+                return_field.disabled = false;
+            } 
+            else {
+                return_field.disabled = true;
+            }
+        }
+    </script>
+
+</body>
+</html>

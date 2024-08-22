@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Flight Ratings</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>View Flight Ratings</h1>
+    <div class="container">
+        <form action="/view_flight_ratingsAuth" method="POST">
+            <label for="flight_number">Select Flight:</label>
+            <select id="flight_number" name="flight_number">
+                <option value="">All Flights</option>
+                <!-- Add options for flight numbers -->
+            </select>
+            <br>
+            <input type="submit" value="View Ratings">
+        </form>
+        <!-- Display the average rating and comments for the selected flight -->
+        {% if flight_ratings %}
+            <p>Average Rating: {{ flight_ratings.average_rating }}</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Rating</th>
+                        <th>Comment</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rating in flight_ratings.ratings %}
+                        <tr>
+                            <td>{{ rating.customer }}</td>
+                            <td>{{ rating.rating }}</td>
+                            <td>{{ rating.comment }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+    <div class="go-back">
+        <a href="/staff_home"><button>Go Back</button></a>
+    </div>
+</body>
+</html>

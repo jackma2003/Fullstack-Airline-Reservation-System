@@ -1,0 +1,232 @@
+/* Global Styles */
+body {
+    font-family: 'Roboto', Arial, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Styles */
+h1 {
+    text-align: center;
+    color: #fff;
+    background-color: #2c3e50;
+    padding: 30px 0;
+    margin: 0 0 30px;
+    font-size: 2.5em;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Button Styles */
+.button-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+}
+
+.button-container a {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: #3498db;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    text-align: center;
+    min-width: 150px;
+    font-weight: bold;
+}
+
+.button-container a:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .button-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .button-container a {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
+
+/* Flight Search Container */
+.flight-search-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+/* Form Input Styles */
+input[type="text"], input[type="date"], input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+input[type="submit"] {
+    background-color: #2ecc71;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 18px;
+    transition: background-color 0.3s ease;
+}
+
+input[type="submit"]:hover {
+    background-color: #27ae60;
+}
+
+/* Error Message */
+.error {
+    color: #e74c3c;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+/* Back Button */
+.go-back {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.go-back button {
+    background-color: #95a5a6;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.go-back button:hover {
+    background-color: #7f8c8d;
+}
+
+/* Purchase Container */
+.purchase-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+/* Paragraph Styles */
+p {
+    font-size: 16px;
+    font-weight: normal;
+    margin-bottom: 15px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .flight-search-container {
+        padding: 20px;
+    }
+    
+    .button-container {
+        text-align: center;
+    }
+    
+    .button-container a {
+        display: block;
+        margin: 10px 0;
+    }
+}
+
+/* New styles for the customer home buttons */
+.customer-action-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    padding: 20px 0;
+    border-top: 1px solid #e0e0e0;
+}
+
+.customer-action-buttons .button {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: #3498db;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    text-align: center;
+    font-weight: bold;
+    min-width: 200px;
+}
+
+.customer-action-buttons .button:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.customer-action-buttons .button.logout {
+    background-color: #e74c3c;
+}
+
+.customer-action-buttons .button.logout:hover {
+    background-color: #c0392b;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .customer-action-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .customer-action-buttons .button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}

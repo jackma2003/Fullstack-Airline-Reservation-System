@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer Login</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Customer Login</h1>
+    <form action="/loginAuth" method="POST">
+        <input type="text" name="email" placeholder="Email" required/><br>
+        <input type="password" name="password" placeholder="Password" required/><br>
+        <input type="submit" value="Login"/>
+        {% if error %}
+        <p class="error"><strong>Error:</strong> {{error}}</p>
+        {% endif %}
+    </form>
+    <div class="go-back">
+        <a href="/"><button>Go back</button></a>
+    </div>
+</body>
+</html>

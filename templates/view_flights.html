@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Flights</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>View Flights</h1>
+    <div class="container">
+        <form action="/view_flightsAuth" method="POST">
+            <label for="date_range">Select Date Range:</label>
+            <input type="date" id="start_date" name="start_date" required>
+            <input type="date" id="end_date" name="end_date" required>
+            <br>
+            <label for="depart_airport">Departure Airport:</label>
+            <input type="text" id="depart_airport" name="depart_airport" required>
+            <br>
+            <br>
+            <label for="arrival_airport">Arrival Airport:</label>
+            <input type="text" id="arrival_airport" name="arrival_airport" required>
+            </br>
+            <input type="submit" value="View Flights">
+        </form>
+        <!-- Display the list of flights based on the selected criteria -->
+        {% if flights %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Flight Number</th>
+                        <th>Departure Date</th>
+                        <th>Departure Time</th>
+                        <th>Arrival Date</th>
+                        <th>Arrival Time</th>
+                        <th>Customers</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for flight in flights %}
+                        <tr>
+                            <td>{{ flight.flight_number }}</td>
+                            <td>{{ flight.depart_date }}</td>
+                            <td>{{ flight.depart_time }}</td>
+                            <td>{{ flight.arrival_date }}</td>
+                            <td>{{ flight.arrival_time }}</td>
+                            <td><a href="/view_customers/{{ flight.flight_number }}">View Customers</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+    <div class="go-back">
+        <a href="/staff_home"><button>Go Back</button></a>
+    </div>
+</body>
+</html>
