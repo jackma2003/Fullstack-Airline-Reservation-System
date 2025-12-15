@@ -7,8 +7,9 @@
 
 - 🖥️ Frontend: HTML, CSS, JavaScript
 - 🔧 Backend: Python Flask
+- 🎨 Templating: Jinja2
 - 🗄️ Database: MySQL
-- 🎨 GUI: MySQL Workbench
+- 🛠️ GUI: MySQL Workbench
 
 ## 🚀 Setup Instructions
 
