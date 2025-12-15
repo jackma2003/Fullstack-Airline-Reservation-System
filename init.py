@@ -136,7 +136,10 @@ def customer_home():
         flights = cursor.fetchall()
         cursor.close()
         
-        return render_template('customer_home.html', first_name=first_name, flights=flights)
+        # Get error message from session if exists
+        error = session.pop('error', None)
+        
+        return render_template('customer_home.html', first_name=first_name, flights=flights, error=error)
     else:
         return redirect('/customer_login')
 
@@ -279,8 +282,14 @@ def flights():
 
 @app.route('/purchase', methods=['GET', 'POST'])
 def purchase():
+	# Check if user is logged in
+	if 'email' not in session:
+		return redirect('/customer_login')
 
 	flight_type = request.args.get('flight_type')
+	if not flight_type:
+		return redirect('/customer_home')
+		
 	session['flight_type'] = flight_type
 
 	if flight_type == 'one-way':
@@ -336,13 +345,12 @@ def purchase():
 	
 	#find total seats for a specific flight
 	num_seats ='''SELECT seats 
-                  FROM airplane JOIN flight
+                  FROM airplane JOIN flight ON airplane.airline_name = flight.airline_name AND airplane.airplane_id = flight.airplane_id
                   WHERE airplane.airline_name = %s AND
                   airplane.airplane_id = %s AND
                   flight.flight_number = %s AND
                   flight.depart_date = %s AND
-                  flight.depart_time = %s AND
-				  flight.airline_name = %s'''
+                  flight.depart_time = %s'''
 	
 	#obtain base price
 	find_base = '''SELECT base_price
@@ -361,7 +369,7 @@ def purchase():
 		print(f"reserved: {reserved}")
 
 		#find total seats for a specific flight
-		cursor.execute(num_seats, (airplane_name, airplane_id, flight_num, depart_date, depart_time, airline_name))
+		cursor.execute(num_seats, (airline_name, airplane_id, flight_num, depart_date, depart_time))
 		seats = cursor.fetchall()
 		flight_seats = seats[0]['seats']
 		print(f"available seats: {flight_seats}")
@@ -393,7 +401,7 @@ def purchase():
 		#print(f"reserved: {depart_reserved}")
 
 		#find total seats for a specific flight
-		cursor.execute(num_seats, (departing_airplane_name, departing_airplane_id, departing_flight_num, departing_depart_date, departing_depart_time, departing_airline_name))
+		cursor.execute(num_seats, (departing_airline_name, departing_airplane_id, departing_flight_num, departing_depart_date, departing_depart_time))
 		depart_seats = cursor.fetchall()
 		depart_flight_seats = depart_seats[0]['seats']
 		#print(f"available seats: {depart_flight_seats}")
@@ -420,7 +428,7 @@ def purchase():
 		#print(f"reserved: {return_reserved}")
 
 		#find total seats for a specific flight
-		cursor.execute(num_seats, (returning_airplane_name, returning_airplane_id, returning_flight_num, returning_depart_date, returning_depart_time, returning_airline_name))
+		cursor.execute(num_seats, (returning_airline_name, returning_airplane_id, returning_flight_num, returning_depart_date, returning_depart_time))
 		return_seats = cursor.fetchall()
 		return_flight_seats = return_seats[0]['seats']
 		#print(f"available seats: {return_flight_seats}")
@@ -454,130 +462,141 @@ def purchase():
 
 @app.route('/purchaseAuth', methods = ['GET', 'POST'])
 def purchaseAuth():
+	# Check if user is logged in
+	if 'email' not in session:
+		return redirect('/customer_login')
 	
-	#user input
-	email = request.form['email']
-	first_name = request.form['first_name']
-	last_name = request.form['last_name']
-	dob = request.form['dob']
-	print(email)
-
-	#card info
-	card_type = request.form['card_type']
-	card_name = request.form['card_name']
-	card_num = request.form['card_num']
-	exp_date = request.form['exp_date']
-
+	# Check if flight_type is in session
+	if 'flight_type' not in session:
+		session['error'] = "No flight selected. Please search for a flight first."
+		return redirect('/customer_home')
 	
-	#Ticket_id needs to be created for flight first:
-	largest_ticket_id = '''SELECT MAX(ticket_id) as recent_id
-				   		  FROM ticket'''
-	
-	cursor = conn.cursor()
-	cursor.execute(largest_ticket_id)
-	largest_id = cursor.fetchone()
-	
-	if largest_id['recent_id'] == None:
-		new_ticket_id = "T1"
+	try:
+		#user input
+		email = request.form['email']
+		first_name = request.form['first_name']
+		last_name = request.form['last_name']
+		dob = request.form['dob']
 
-	else:
-	#increments the num value next to 'T' by 1 to generate new id
-		new_ticket_id = f"T{int(largest_id['recent_id'][1:len(largest_id['recent_id'])]) + 1}"
+		#card info
+		card_type = request.form['card_type']
+		card_name = request.form['card_name']
+		card_num = request.form['card_num']
+		exp_date = request.form['exp_date']
 
-	print(f"NEW TICKET ID: {new_ticket_id}")
-
-	
-	add_ticket = '''INSERT INTO ticket (ticket_id, flight_number, airline_name, depart_date, depart_time, 
-			   ticket_price, card_type, card_num, card_name, exp_date, pur_date, pur_time)
-			   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s )'''
-	
-	add_purchase = '''INSERT INTO purchases (email, ticket_id)
-					  VALUES (%s, %s)'''
-
-	#price info
-	action = request.form['choice']
-
-	current_day = datetime.today().date()
-	current_time = datetime.now().time()
-
-	print(current_day)
-	print(current_time)
-
-	error = None
-
-	if session['flight_type'] == 'one-way':
-
-		print("NOT SUPPOSED TO HAPPEN")
-
-		#CHECK IF FLIGHT CAPACITY IS 80% OR FULL
-		if session['capacity_filled'] == 1:
-			print("MAX CAPACITY REACHED")
-			
-			error = "Selected Flight has no more available seats"
-			return render_template('customer_home.html', error = error)
-			
+		
+		#Ticket_id needs to be created for flight first:
+		largest_ticket_id = '''SELECT MAX(ticket_id) as recent_id
+					   		  FROM ticket'''
+		
+		cursor = conn.cursor()
+		cursor.execute(largest_ticket_id)
+		largest_id = cursor.fetchone()
+		
+		if largest_id['recent_id'] == None:
+			new_ticket_id = "T1"
 		else:
-			
-			#add to ticket table
-			cursor.execute(add_ticket, (new_ticket_id, session['flight_num'], session['airline_name'], session['depart_date'], session['depart_time'], session['ticket_price'], card_type, card_num, card_name, exp_date, current_day, current_time))
-			conn.commit()
+			#increments the num value next to 'T' by 1 to generate new id
+			new_ticket_id = f"T{int(largest_id['recent_id'][1:len(largest_id['recent_id'])]) + 1}"
 
-			#add to purchase table
-			cursor.execute(add_purchase, (email, new_ticket_id))
-			conn.commit()
-			
+		
+		add_ticket = '''INSERT INTO ticket (ticket_id, flight_number, airline_name, depart_date, depart_time, 
+				   ticket_price, card_type, card_num, card_name, exp_date, pur_date, pur_time)
+				   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s )'''
+		
+		add_purchase = '''INSERT INTO purchases (email, ticket_id)
+						  VALUES (%s, %s)'''
 
-	else:
-		#CHECK IF FLIGHT CAPACITY IS 80% OR FULL
-		if session['depart_capacity_filled'] == 1 or session['return_capacity_filled'] == 1:
-			error = "One or Both of Selected Flights has no more available seats"
-			return render_template('customer_home.html', error = error)
-		else:
-			
-			#add to ticket table
-			cursor.execute(add_ticket, (new_ticket_id, session['departing_flight_num'], session['departing_airline_name'], session['departing_depart_date'], session['departing_depart_time'], session['depart_ticket_price'], card_type, card_num, card_name, exp_date, current_day, current_time))
-			conn.commit()
+		#price info
+		action = request.form['choice']
 
-			#add to purchase table
-			cursor.execute(add_purchase, (email, new_ticket_id))
-			conn.commit()
-			
-			#return flight needs separate ticket id since both flights in a round trip need to have unique ticket_ids (increment id of departure flight by 1 to generate new id for return flight)
-			return_new_ticket_id = f"T{int(new_ticket_id[1:len(new_ticket_id)]) + 1}"
-			print(f"RETURN TICKET ID: {return_new_ticket_id}")
-			
-			
-			cursor.execute(add_ticket, (return_new_ticket_id, session['returning_flight_num'], session['returning_airline_name'], session['returning_depart_date'], session['returning_depart_time'], session['return_ticket_price'], card_type, card_num, card_name, exp_date, current_day, current_time))
-			conn.commit()
-			'''
-			#add to purchase table
-			cursor.execute(add_purchase(email, new_ticket_id))
-			conn.commit()
-			'''
-			#new id for return flight
-			return_new_ticket_id = f"T{int(new_ticket_id[1]) + 1}"
-			cursor.execute(add_purchase, (email, return_new_ticket_id))
-			conn.commit()
-			
+		current_day = datetime.today().date()
+		current_time = datetime.now()  # Changed from .time() to full datetime since pur_time is datetime type
 
-	if action == 'Buy Another':
-
-		session['card_type'] = card_type
-		session['card_name'] = card_name
-		session['card_num'] = card_num
-		session['exp_date'] = exp_date
-
+		error = None
 
 		if session['flight_type'] == 'one-way':
-			#session['total_price'] = session['total_price'] + session['ticket_price']
-			return render_template('purchase.html', buy_another = action, email = email, card_type = card_type, card_name = card_name, card_num = card_num, exp_date = exp_date, flight_type = session['flight_type'], ticket_price = session['ticket_price'])
-			#SESSION POP CARD INFO AFTER DONE?
+			# Check if required session variables exist
+			if 'flight_num' not in session or 'airline_name' not in session or 'depart_date' not in session or 'depart_time' not in session or 'ticket_price' not in session:
+				cursor.close()
+				session['error'] = "Missing flight information. Please try selecting the flight again."
+				return redirect('/customer_home')
+
+			#CHECK IF FLIGHT CAPACITY IS 80% OR FULL
+			if 'capacity_filled' in session and session['capacity_filled'] == 1:
+				cursor.close()
+				session['error'] = "Selected Flight has no more available seats"
+				return redirect('/customer_home')
+			else:
+				#add to ticket table (convert ticket_price to int since database expects int)
+				cursor.execute(add_ticket, (new_ticket_id, session['flight_num'], session['airline_name'], session['depart_date'], session['depart_time'], int(round(session['ticket_price'])), card_type, card_num, card_name, exp_date, current_day, current_time))
+				conn.commit()
+
+				#add to purchase table
+				cursor.execute(add_purchase, (email, new_ticket_id))
+				conn.commit()
+
 		else:
-			return render_template('purchase.html', buy_another = action, email = email, card_type = card_type, card_name = card_name, card_num = card_num, exp_date = exp_date, 
-						  flight_type = session['flight_type'], ticket_price = session['ticket_price'], depart_ticket_price = session['depart_ticket_price'], return_ticket_price = session['return_ticket_price'], total = session['total'])
-  
-    #done
-	else:
+			# Check if required session variables exist for round trip
+			if 'departing_flight_num' not in session or 'departing_airline_name' not in session or 'departing_depart_date' not in session or 'departing_depart_time' not in session or 'depart_ticket_price' not in session:
+				cursor.close()
+				session['error'] = "Missing departure flight information. Please try selecting the flight again."
+				return redirect('/customer_home')
+			if 'returning_flight_num' not in session or 'returning_airline_name' not in session or 'returning_depart_date' not in session or 'returning_depart_time' not in session or 'return_ticket_price' not in session:
+				cursor.close()
+				session['error'] = "Missing return flight information. Please try selecting the flight again."
+				return redirect('/customer_home')
+
+			#CHECK IF FLIGHT CAPACITY IS 80% OR FULL
+			if ('depart_capacity_filled' in session and session['depart_capacity_filled'] == 1) or ('return_capacity_filled' in session and session['return_capacity_filled'] == 1):
+				cursor.close()
+				session['error'] = "One or Both of Selected Flights has no more available seats"
+				return redirect('/customer_home')
+			else:
+				#add to ticket table (convert ticket_price to int since database expects int)
+				cursor.execute(add_ticket, (new_ticket_id, session['departing_flight_num'], session['departing_airline_name'], session['departing_depart_date'], session['departing_depart_time'], int(round(session['depart_ticket_price'])), card_type, card_num, card_name, exp_date, current_day, current_time))
+				conn.commit()
+
+				#add to purchase table
+				cursor.execute(add_purchase, (email, new_ticket_id))
+				conn.commit()
+				
+				#return flight needs separate ticket id since both flights in a round trip need to have unique ticket_ids (increment id of departure flight by 1 to generate new id for return flight)
+				return_new_ticket_id = f"T{int(new_ticket_id[1:len(new_ticket_id)]) + 1}"
+				
+				cursor.execute(add_ticket, (return_new_ticket_id, session['returning_flight_num'], session['returning_airline_name'], session['returning_depart_date'], session['returning_depart_time'], int(round(session['return_ticket_price'])), card_type, card_num, card_name, exp_date, current_day, current_time))
+				conn.commit()
+				
+				#add to purchase table for return flight
+				cursor.execute(add_purchase, (email, return_new_ticket_id))
+				conn.commit()
+		
+		cursor.close()
+
+		if action == 'Buy Another':
+			session['card_type'] = card_type
+			session['card_name'] = card_name
+			session['card_num'] = card_num
+			session['exp_date'] = exp_date
+
+			if session['flight_type'] == 'one-way':
+				return render_template('purchase.html', buy_another = action, email = email, card_type = card_type, card_name = card_name, card_num = card_num, exp_date = exp_date, flight_type = session['flight_type'], ticket_price = session['ticket_price'])
+			else:
+				return render_template('purchase.html', buy_another = action, email = email, card_type = card_type, card_name = card_name, card_num = card_num, exp_date = exp_date, 
+							  flight_type = session['flight_type'], ticket_price = session['ticket_price'], depart_ticket_price = session['depart_ticket_price'], return_ticket_price = session['return_ticket_price'], total = session['total'])
+		else:
+			#done
+			return redirect('/customer_home')
+			
+	except Exception as e:
+		if 'cursor' in locals():
+			cursor.close()
+		# Print error for debugging
+		print(f"Purchase error: {str(e)}")
+		print(f"Exception type: {type(e).__name__}")
+		import traceback
+		traceback.print_exc()
+		session['error'] = f"An error occurred while processing your purchase: {str(e)}"
 		return redirect('/customer_home')
 	
 
@@ -1070,8 +1089,8 @@ def post_ratings_comments():
 	
 
 app.secret_key = 'some key that you will never guess'
-#Run the app on localhost port 5000
+#Run the app on localhost port 5001 (changed from 5000 to avoid macOS AirPlay Receiver conflict)
 #debug = True -> you don't have to restart flask
 #for changes to go through, TURN OFF FOR PRODUCTION
 if __name__ == "__main__":
-	app.run('127.0.0.1', 5000, debug = True)
+	app.run('127.0.0.1', 5001, debug = True)

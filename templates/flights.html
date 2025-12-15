@@ -32,38 +32,74 @@
                 </thead>
                 <tbody>
                     {% for flight in flights %}
-                        {% set flight_data = flight[0] if trip == "round-trip" else flight %}
-                        <tr>
-                            <td>{{ flight_data['flight_status'] }}</td>
-                            <td>{{ flight_data['airline_name'] }}</td>
-                            <td>{{ flight_data['airplane_name'] }}</td>
-                            <td>{{ flight_data['flight_number'] }}</td>
-                            <td>{{ flight_data['airplane_id'] }}</td>
-                            <td>{{ flight_data['depart_date'] }}</td>
-                            <td>{{ flight_data['depart_time'] }}</td>
-                            <td>{{ flight_data['arrival_date'] }}</td>
-                            <td>{{ flight_data['arrival_time'] }}</td>
-                            <td>{{ flight_data['depart_airport'] }}</td>
-                            <td>{{ flight_data['arrival_airport'] }}</td>
-                            {% if session.email %}
-                                <td><a href="{{ url_for('purchase', flight_number=flight_data['flight_number']) }}" class="btn-purchase">Purchase</a></td>
-                            {% endif %}
-                        </tr>
                         {% if trip == "round-trip" %}
+                            {% set departing_flight = flight[0] %}
+                            {% set returning_flight = flight[1] %}
                             <tr>
-                                <td>{{ flight[1]['flight_status'] }}</td>
-                                <td>{{ flight[1]['airline_name'] }}</td>
-                                <td>{{ flight[1]['airplane_name'] }}</td>
-                                <td>{{ flight[1]['flight_number'] }}</td>
-                                <td>{{ flight[1]['airplane_id'] }}</td>
-                                <td>{{ flight[1]['depart_date'] }}</td>
-                                <td>{{ flight[1]['depart_time'] }}</td>
-                                <td>{{ flight[1]['arrival_date'] }}</td>
-                                <td>{{ flight[1]['arrival_time'] }}</td>
-                                <td>{{ flight[1]['depart_airport'] }}</td>
-                                <td>{{ flight[1]['arrival_airport'] }}</td>
+                                <td>{{ departing_flight['flight_status'] }}</td>
+                                <td>{{ departing_flight['airline_name'] }}</td>
+                                <td>{{ departing_flight['airplane_name'] }}</td>
+                                <td>{{ departing_flight['flight_number'] }}</td>
+                                <td>{{ departing_flight['airplane_id'] }}</td>
+                                <td>{{ departing_flight['depart_date'] }}</td>
+                                <td>{{ departing_flight['depart_time'] }}</td>
+                                <td>{{ departing_flight['arrival_date'] }}</td>
+                                <td>{{ departing_flight['arrival_time'] }}</td>
+                                <td>{{ departing_flight['depart_airport'] }}</td>
+                                <td>{{ departing_flight['arrival_airport'] }}</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>{{ returning_flight['flight_status'] }}</td>
+                                <td>{{ returning_flight['airline_name'] }}</td>
+                                <td>{{ returning_flight['airplane_name'] }}</td>
+                                <td>{{ returning_flight['flight_number'] }}</td>
+                                <td>{{ returning_flight['airplane_id'] }}</td>
+                                <td>{{ returning_flight['depart_date'] }}</td>
+                                <td>{{ returning_flight['depart_time'] }}</td>
+                                <td>{{ returning_flight['arrival_date'] }}</td>
+                                <td>{{ returning_flight['arrival_time'] }}</td>
+                                <td>{{ returning_flight['depart_airport'] }}</td>
+                                <td>{{ returning_flight['arrival_airport'] }}</td>
                                 {% if session.email %}
-                                    <td><a href="{{ url_for('purchase', flight_number=flight[1]['flight_number']) }}" class="btn-purchase">Purchase</a></td>
+                                    <td><a href="{{ url_for('purchase', 
+                                        flight_type='round-trip',
+                                        departing_airline_name=departing_flight['airline_name'],
+                                        departing_airplane_name=departing_flight['airplane_name'],
+                                        departing_flight_number=departing_flight['flight_number'],
+                                        departing_airplane_id=departing_flight['airplane_id'],
+                                        departing_depart_date=departing_flight['depart_date'],
+                                        departing_depart_time=departing_flight['depart_time'],
+                                        returning_airline_name=returning_flight['airline_name'],
+                                        returning_airplane_name=returning_flight['airplane_name'],
+                                        returning_flight_number=returning_flight['flight_number'],
+                                        returning_airplane_id=returning_flight['airplane_id'],
+                                        returning_depart_date=returning_flight['depart_date'],
+                                        returning_depart_time=returning_flight['depart_time']) }}" class="btn-purchase">Purchase</a></td>
+                                {% endif %}
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td>{{ flight['flight_status'] }}</td>
+                                <td>{{ flight['airline_name'] }}</td>
+                                <td>{{ flight['airplane_name'] }}</td>
+                                <td>{{ flight['flight_number'] }}</td>
+                                <td>{{ flight['airplane_id'] }}</td>
+                                <td>{{ flight['depart_date'] }}</td>
+                                <td>{{ flight['depart_time'] }}</td>
+                                <td>{{ flight['arrival_date'] }}</td>
+                                <td>{{ flight['arrival_time'] }}</td>
+                                <td>{{ flight['depart_airport'] }}</td>
+                                <td>{{ flight['arrival_airport'] }}</td>
+                                {% if session.email %}
+                                    <td><a href="{{ url_for('purchase', 
+                                        flight_type='one-way',
+                                        airline_name=flight['airline_name'],
+                                        airplane_name=flight['airplane_name'],
+                                        flight_number=flight['flight_number'],
+                                        airplane_id=flight['airplane_id'],
+                                        depart_date=flight['depart_date'],
+                                        depart_time=flight['depart_time']) }}" class="btn-purchase">Purchase</a></td>
                                 {% endif %}
                             </tr>
                         {% endif %}
