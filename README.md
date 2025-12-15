@@ -8,31 +8,97 @@
 - 🖥️ Frontend: HTML, CSS, JavaScript
 - 🔧 Backend: Python Flask
 - 🗄️ Database: MySQL
+- 🎨 GUI: MySQL Workbench
 
 ## 🚀 Setup Instructions
 
 ### Prerequisites
 
-- 📦 XAMPP with phpMyAdmin
-- 🐍 Python with Flask and PyMySQL modules installed
+- 🐍 Python 3.x
+- 🗄️ MySQL Server (via Homebrew on macOS)
+- 🎨 MySQL Workbench (for database visualization)
+
+### Installation
+
+1. **Install MySQL:**
+   ```bash
+   brew install mysql
+   brew services start mysql
+   ```
+
+2. **Install Python dependencies:**
+   ```bash
+   pip install Flask pymysql
+   ```
+
+3. **Install MySQL Workbench (Optional):**
+   ```bash
+   brew install --cask mysqlworkbench
+   ```
 
 ### Database Setup
 
-1. 🟢 Ensure MySQL Database and Apache web server are running in XAMPP.
-2. ⚙️ Configure MySQL: 
-   - Port: `3306`
-   - User: `root`
-   - Charset: `utf8mb4`
-3. 🗃️ Create a database named `Airline_SystemV2` in phpMyAdmin.
-4. 📥 Import tables and data from the `database` folder.
+1. **Connect to MySQL:**
+   ```bash
+   mysql -u root -p
+   ```
+
+2. **Create the database:**
+   ```sql
+   CREATE DATABASE Airline_SystemV2;
+   USE Airline_SystemV2;
+   ```
+
+3. **Import tables and data:**
+   ```sql
+   SOURCE /path/to/your/project/database/tables.sql;
+   SOURCE /path/to/your/project/database/inserts.sql;
+   ```
+
+4. **Verify tables were created:**
+   ```sql
+   SHOW TABLES;
+   exit;
+   ```
+
+### MySQL Workbench Setup (Optional)
+
+1. Open MySQL Workbench
+2. Create a new connection:
+   - **Connection Name:** Local MySQL
+   - **Hostname:** `127.0.0.1`
+   - **Port:** `3306`
+   - **Username:** `root`
+   - **Password:** Your MySQL password
+3. Test connection and connect to visualize your database
+
+### Application Configuration
+
+1. **Update database credentials in `init.py`:**
+   ```python
+   conn = pymysql.connect(
+       host='localhost',
+       port=3306,
+       user='root',
+       password='your_mysql_password',  # Update this
+       db='Airline_SystemV2',
+       charset='utf8mb4',
+       cursorclass=pymysql.cursors.DictCursor
+   )
+   ```
 
 ### Application Deployment
 
-1. 🚀 Run the application:
+1. **Run the application:**
+   ```bash
+   python init.py
    ```
-   python3 init.py
-   ```
-2. 🌐 Access the application at `http://127.0.0.1:5000`
+
+2. **Access the application:**
+   - Open your browser and navigate to `http://127.0.0.1:5000`
+
+3. **Stop the application:**
+   - Press `Ctrl + C` in the terminal
 
 ## 📋 Use Cases
 
