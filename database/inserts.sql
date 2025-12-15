@@ -1,5 +1,6 @@
--- a.) One Airline name "Jet Blue" --
+-- a.) Two Airline name "Jet Blue" and "Delta" --
 INSERT INTO Airline(airline_name) VALUES ('Jet Blue');
+INSERT INTO Airline(airline_name) VALUES ('Delta');
 
 -- b.) At least Two airports named "JFK" in NYC and "PVG" in Shanghai -- 
 INSERT INTO Airport(airport_code, airport_name, city, country, terminals, airport_type) VALUES ('JFK', 'John F. Kennedy Airport', 'NYC', 'United States', 6, 'both');
@@ -54,7 +55,7 @@ INSERT INTO Flight (flight_number, airline_name, depart_date, depart_time, fligh
 VALUES ('JB103', 'Jet Blue', '2026-08-10', '11:00:00', 'on-time', 'JFK', 'PVG', '2026-08-11', '12:30:00', 900, 'JetBlue','GHI789');
 
 INSERT INTO Flight (flight_number, airline_name, depart_date, depart_time, flight_status, depart_airport, arrival_airport, arrival_date, arrival_time, base_price, airplane_name, airplane_id)
-VALUES ('JB104', 'Jet Blue', '2026-08-30', '12:30:00', 'on-time', 'JFK', 'PVG', '2026-08-31', '3:15:00', 900, 'Delta', 'VWT796');
+VALUES ('JB104', 'Jet Blue', '2026-08-30', '12:30:00', 'on-time', 'JFK', 'PVG', '2026-08-31', '3:15:00', 900, 'JetBlue', 'GHI789');
 
 -- g.) Insert some tickets for corresponding flights and insert some purchase records(customer bought some tickets) -- 
 

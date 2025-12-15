@@ -92,8 +92,7 @@ CREATE TABLE Flight(
     arrival_airport varchar(255) not null,
     primary key(flight_number, airline_name, depart_date, depart_time),
     foreign key(airline_name) references Airline(airline_name),
-    foreign key(airplane_name) references Airplane(airline_name),
-    foreign key(airplane_id) references Airplane(airplane_id),
+    foreign key(airplane_id, airline_name) references Airplane(airplane_id, airline_name),
     foreign key(depart_airport) references Airport(airport_code),
     foreign key(arrival_airport) references Airport(airport_code)
 );
