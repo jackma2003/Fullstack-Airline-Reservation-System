@@ -9,14 +9,6 @@
 - 🔧 Backend: Python Flask
 - 🗄️ Database: MySQL
 
-## 📊 Database Schema
-
-<p align="center">
-  <a href="https://github.com/user-attachments/files/16367518/Project_1.pdf">
-    <img src="https://img.shields.io/badge/View-Relational%20Schema-blue?style=for-the-badge&logo=github" alt="View Relational Schema">
-  </a>
-</p>
-
 ## 🚀 Setup Instructions
 
 ### Prerequisites
