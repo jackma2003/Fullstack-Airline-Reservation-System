@@ -75,7 +75,7 @@
             <label for="depart_date">Departure Date:</label>
             <input type="date" id="depart_date" name="departure_date" required><br>
             
-            <label for="return_date">Return Date (optional):</label>
+            <label for="return_date">Return Date:</label>
             <input type="date" id="return_date" name="return_date" disabled><br>
             
             <input type="submit" value="Search Flights">
@@ -95,9 +95,12 @@
 
             if (choice.value == "round-trip") {
                 return_field.disabled = false;
+                return_field.required = true;
             } 
             else {
                 return_field.disabled = true;
+                return_field.required = false;
+                return_field.value = '';
             }
         }
     </script>

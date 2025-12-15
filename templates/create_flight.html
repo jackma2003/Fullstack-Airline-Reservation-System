@@ -13,7 +13,15 @@
             <p>{{ error }}</p>
         </div>
         {% endif %}
-        <form action="/create_flightAuth" method="POST">
+        <div style="margin-bottom: 20px;">
+            <label>Flight Type:</label>
+            <input type="radio" name="flight_type" id="one_way" value="one-way" checked onchange="toggleRoundTrip()">
+            <label for="one_way">One-Way</label>
+            <input type="radio" name="flight_type" id="round_trip" value="round-trip" onchange="toggleRoundTrip()">
+            <label for="round_trip">Round Trip</label>
+        </div>
+        <form action="/create_flightAuth" method="POST" id="flightForm">
+            <input type="hidden" name="flight_type" id="flight_type_hidden" value="one-way">
             <label for="flight_number">Flight Number:</label>
             <input type="text" id="flight_number" name="flight_number" required><br>
             
@@ -59,8 +67,68 @@
                 <option value="PVG">PVG</option>
             </select><br>
 
+            <!-- Round Trip Fields (hidden by default) -->
+            <div id="round_trip_fields" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 2px solid #ddd;">
+                <h3>Return Flight Details</h3>
+                
+                <label for="return_flight_number">Return Flight Number:</label>
+                <input type="text" id="return_flight_number" name="return_flight_number"><br>
+
+                <label for="return_airplane_name">Return Airplane Name:</label>
+                <input type="text" id="return_airplane_name" name="return_airplane_name"><br>
+
+                <label for="return_airplane_id">Return Airplane ID:</label>
+                <input type="text" id="return_airplane_id" name="return_airplane_id"><br>
+
+                <label for="return_depart_date">Return Departure Date:</label>
+                <input type="date" id="return_depart_date" name="return_depart_date"><br>
+
+                <label for="return_depart_time">Return Departure Time:</label>
+                <input type="time" id="return_depart_time" name="return_depart_time"><br>
+
+                <label for="return_arrival_time">Return Arrival Time:</label>
+                <input type="time" id="return_arrival_time" name="return_arrival_time"><br>
+
+                <label for="return_arrival_date">Return Arrival Date:</label>
+                <input type="date" id="return_arrival_date" name="return_arrival_date"><br>
+
+                <label for="return_base_price">Return Base Price:</label>
+                <input type="number" id="return_base_price" name="return_base_price"><br>
+
+                <label for="return_flight_status">Return Flight Status:</label>
+                <select id="return_flight_status" name="return_flight_status">
+                    <option value="on-time">on-time</option>
+                    <option value="delayed">delayed</option>
+                </select><br>
+            </div>
+
             <input type="submit" value="Create Flight">
         </form>
+        <script>
+            function toggleRoundTrip() {
+                const roundTripRadio = document.getElementById('round_trip');
+                const roundTripFields = document.getElementById('round_trip_fields');
+                const flightTypeHidden = document.getElementById('flight_type_hidden');
+                
+                if (roundTripRadio.checked) {
+                    roundTripFields.style.display = 'block';
+                    // Make return flight fields required
+                    const returnFields = roundTripFields.querySelectorAll('input, select');
+                    returnFields.forEach(field => {
+                        field.required = true;
+                    });
+                    flightTypeHidden.value = 'round-trip';
+                } else {
+                    roundTripFields.style.display = 'none';
+                    // Make return flight fields not required
+                    const returnFields = roundTripFields.querySelectorAll('input, select');
+                    returnFields.forEach(field => {
+                        field.required = false;
+                    });
+                    flightTypeHidden.value = 'one-way';
+                }
+            }
+        </script>
         <div class="go-back">
             <a href="/staff_home"><button>Go Back</button></a>
         </div>

@@ -243,12 +243,21 @@ def flights():
 	
 	#round trip chosen
 	else:
+		# Check if return_date is provided
+		if not return_date:
+			cursor.close()
+			none_found = "Please provide a return date for round trip flights."
+			return render_template('flights.html', nothing = none_found)
+		
 		return_dated = datetime.strptime(return_date, '%Y-%m-%d').date()
 
-		#return flight is after departure flight (same day return flight is tackled below)
+		#return flight is after departure flight - check for future flights only
+		# Return flight should depart from destination and arrive at source (flipped)
 		returning = '''SELECT *
 					   FROM flight 
-					   WHERE depart_date = %s AND depart_airport = %s AND arrival_airport = %s'''
+					   WHERE depart_date = %s 
+					   AND (depart_date > CURDATE() OR (depart_date = CURDATE() AND depart_time > CURTIME()))
+					   AND depart_airport = %s AND arrival_airport = %s'''
 
 		#source and destination flipped for return flight
 		cursor.execute(returning, (return_dated, destination, source))
@@ -626,6 +635,7 @@ def create_flightAuth():
 	username = session['username']
 
 	if request.method == 'POST':
+		flight_type = request.form.get('flight_type', 'one-way')
 		flight_number = request.form['flight_number']
 		airline_name = request.form['airline_name']
 		depart_date = request.form['depart_date']
@@ -641,29 +651,73 @@ def create_flightAuth():
 
 		cursor = conn.cursor()
 
-		# Edge case: Check if airplane is under maintenance during flight period
-		# Check if flight period overlaps with maintenance period
-		# Overlap occurs when: maintenance_start <= arrival_date AND maintenance_end >= depart_date
-		maintenance_check = '''
-			SELECT maintenance_start, maintenance_end
-			FROM Airplane
-			WHERE airplane_id = %s AND airline_name = %s
-			AND maintenance_start <= %s AND maintenance_end >= %s
-		'''
-		cursor.execute(maintenance_check, (airplane_id, airline_name, arrival_date, depart_date))
-		maintenance_result = cursor.fetchone()
+		# Helper function to check maintenance
+		def check_maintenance(airplane_id, airline_name, depart_date, arrival_date):
+			maintenance_check = '''
+				SELECT maintenance_start, maintenance_end
+				FROM Airplane
+				WHERE airplane_id = %s AND airline_name = %s
+				AND maintenance_start <= %s AND maintenance_end >= %s
+			'''
+			cursor.execute(maintenance_check, (airplane_id, airline_name, arrival_date, depart_date))
+			return cursor.fetchone()
 
+		# Check maintenance for outbound flight
+		maintenance_result = check_maintenance(airplane_id, airline_name, depart_date, arrival_date)
 		if maintenance_result:
 			cursor.close()
-			error = f"The airplane is under maintenance from {maintenance_result['maintenance_start']} to {maintenance_result['maintenance_end']}, which overlaps with the flight period ({depart_date} to {arrival_date}). Please choose a different airplane or adjust the flight schedule."
+			error = f"The outbound airplane is under maintenance from {maintenance_result['maintenance_start']} to {maintenance_result['maintenance_end']}, which overlaps with the flight period ({depart_date} to {arrival_date}). Please choose a different airplane or adjust the flight schedule."
 			return render_template('create_flight.html', error=error)
 
+		# Create outbound flight
 		query = '''
             INSERT INTO Flight (flight_number, airline_name, depart_date, depart_time, airplane_name, airplane_id, arrival_time, arrival_date, base_price, flight_status, depart_airport, arrival_airport)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         '''
 		cursor.execute(query, (flight_number, airline_name, depart_date, depart_time, airplane_name, airplane_id, arrival_time, arrival_date, base_price, flight_status, depart_airport, arrival_airport))
 		conn.commit()
+
+		# If round trip, create return flight
+		if flight_type == 'round-trip':
+			return_flight_number = request.form.get('return_flight_number')
+			return_airplane_name = request.form.get('return_airplane_name')
+			return_airplane_id = request.form.get('return_airplane_id')
+			return_depart_date = request.form.get('return_depart_date')
+			return_depart_time = request.form.get('return_depart_time')
+			return_arrival_time = request.form.get('return_arrival_time')
+			return_arrival_date = request.form.get('return_arrival_date')
+			return_base_price = request.form.get('return_base_price')
+			return_flight_status = request.form.get('return_flight_status')
+
+			# Validate return flight departs after outbound flight arrives
+			# Compare dates first, then times if same date
+			if return_depart_date < arrival_date:
+				cursor.close()
+				error = "Return flight must depart on or after the outbound flight arrival date. Please adjust the return flight schedule."
+				return render_template('create_flight.html', error=error)
+			elif return_depart_date == arrival_date:
+				# Same day - check times
+				if return_depart_time <= arrival_time:
+					cursor.close()
+					error = "Return flight must depart after the outbound flight arrives. Please adjust the return flight schedule."
+					return render_template('create_flight.html', error=error)
+
+			# Check maintenance for return flight
+			return_maintenance = check_maintenance(return_airplane_id, airline_name, return_depart_date, return_arrival_date)
+			if return_maintenance:
+				cursor.close()
+				error = f"The return airplane is under maintenance from {return_maintenance['maintenance_start']} to {return_maintenance['maintenance_end']}, which overlaps with the return flight period ({return_depart_date} to {return_arrival_date}). Please choose a different airplane or adjust the flight schedule."
+				return render_template('create_flight.html', error=error)
+
+			# Create return flight (airports are swapped)
+			return_query = '''
+				INSERT INTO Flight (flight_number, airline_name, depart_date, depart_time, airplane_name, airplane_id, arrival_time, arrival_date, base_price, flight_status, depart_airport, arrival_airport)
+				VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+			'''
+			# Return flight: departure airport is the arrival airport of outbound, and vice versa
+			cursor.execute(return_query, (return_flight_number, airline_name, return_depart_date, return_depart_time, return_airplane_name, return_airplane_id, return_arrival_time, return_arrival_date, return_base_price, return_flight_status, arrival_airport, depart_airport))
+			conn.commit()
+
 		cursor.close()
 		return render_template('staff_home.html')
 	return render_template('create_flight.html')
