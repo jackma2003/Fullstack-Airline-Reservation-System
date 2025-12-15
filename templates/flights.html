@@ -47,7 +47,9 @@
                                 <td>{{ departing_flight['arrival_time'] }}</td>
                                 <td>{{ departing_flight['depart_airport'] }}</td>
                                 <td>{{ departing_flight['arrival_airport'] }}</td>
-                                <td></td>
+                                {% if session.email %}
+                                    <td></td>
+                                {% endif %}
                             </tr>
                             <tr>
                                 <td>{{ returning_flight['flight_status'] }}</td>
