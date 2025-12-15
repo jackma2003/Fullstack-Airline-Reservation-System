@@ -129,7 +129,7 @@ def customer_home():
             FROM Ticket t
             JOIN Purchases p ON t.ticket_id = p.ticket_id
             JOIN Flight f ON t.airline_name = f.airline_name AND t.flight_number = f.flight_number AND t.depart_date = f.depart_date AND t.depart_time = f.depart_time
-            WHERE p.email = %s AND (f.depart_date > CURDATE() OR (f.depart_date = CURDATE() AND f.depart_date > CURTIME()))
+            WHERE p.email = %s AND (f.depart_date > CURDATE() OR (f.depart_date = CURDATE() AND f.depart_time > CURTIME()))
             ORDER BY f.depart_date ASC
         '''
         cursor.execute(query, (email))
@@ -599,27 +599,41 @@ def purchaseAuth():
 
 @app.route('/cancel_trip', methods=['GET', 'POST'])
 def cancel_trip():
+	# Check if user is logged in
+	if 'email' not in session:
+		return redirect('/customer_login')
+	
 	ticket_id = request.args.get('ticket_id')
-	print("TICKET ID SHOULD BE")
-	print(ticket_id)
+	email = session['email']
 
 	cursor = conn.cursor()
 	
-	query = '''DELETE FROM purchases 
-                WHERE ticket_id = %s AND
-                ticket_id IN(SELECT ticket_id FROM ticket
-                        WHERE ticket_id = %s AND
-                        depart_date > CURDATE() AND
-                        depart_time > CURTIME())'''
-
-	cursor.execute(query, (ticket_id, ticket_id))
-	conn.commit()
-	query = '''DELETE FROM ticket 
-                WHERE ticket_id = %s AND
-                depart_date > CURDATE() AND
-                depart_time > CURTIME()'''
+	# First verify the ticket belongs to the customer and is in the future
+	verify_query = '''SELECT t.ticket_id 
+					  FROM ticket t
+					  JOIN purchases p ON t.ticket_id = p.ticket_id
+					  WHERE t.ticket_id = %s 
+					  AND p.email = %s
+					  AND (t.depart_date > CURDATE() OR (t.depart_date = CURDATE() AND t.depart_time > CURTIME()))'''
 	
-	cursor.execute(query, (ticket_id))
+	cursor.execute(verify_query, (ticket_id, email))
+	valid_ticket = cursor.fetchone()
+	
+	if not valid_ticket:
+		cursor.close()
+		session['error'] = "Ticket not found or cannot be cancelled."
+		return redirect('/customer_home')
+	
+	# Delete from purchases first (due to foreign key constraint)
+	query = '''DELETE FROM purchases 
+                WHERE ticket_id = %s AND email = %s'''
+	cursor.execute(query, (ticket_id, email))
+	conn.commit()
+	
+	# Then delete the ticket
+	query = '''DELETE FROM ticket 
+                WHERE ticket_id = %s'''
+	cursor.execute(query, (ticket_id,))
 	conn.commit()
 	cursor.close()
 	
@@ -630,7 +644,7 @@ def cancel_trip():
 @app.route('/create_flightAuth', methods=['GET', 'POST'])
 def create_flightAuth():
 	if 'username' not in session:
-		render_template('staff_login.html')
+		return redirect('/staff_login')
 
 	username = session['username']
 
@@ -749,7 +763,7 @@ def change_flight_statusAuth():
 @app.route('/add_airplaneAuth', methods=['GET', 'POST'])
 def add_airplaneAuth():
 	if 'username' not in session:
-		return render_template('staff_login.html')
+		return redirect('/staff_login')
 	
 	if request.method == 'POST':
 		airplane_id = request.form['airplane_id']
@@ -778,7 +792,7 @@ def add_airplaneAuth():
 @app.route('/add_airportAuth', methods=['GET', 'POST'])
 def add_airportAuth():
 	if 'username' not in session:
-		return render_template('staff_login.html')
+		return redirect('/staff_login')
 	
 	if request.method == 'POST':
 		airport_code = request.form['airport_code']
@@ -804,7 +818,7 @@ def add_airportAuth():
 @app.route('/schedule_maintenanceAuth', methods=['GET', 'POST'])
 def schedule_maintenanceAuth():
 	if 'username' not in session:
-		return render_template('staff_login.html')
+		return redirect('/staff_login')
 	
 	if request.method == 'POST':
 		airline_name = request.form['airline_name']
@@ -829,7 +843,7 @@ def schedule_maintenanceAuth():
 @app.route('/view_flightsAuth', methods=['GET', 'POST'])
 def view_flightsAuth():
 	if 'username' not in session:
-		return render_template('staff_login.html')
+		return redirect('/staff_login')
 	
 	airline_name = session['airline_name']
 
@@ -858,7 +872,12 @@ def view_flightsAuth():
 @app.route('/view_customers/<flight_number>')
 def view_customers(flight_number):
 	if 'username' not in session:
-		return render_template('staff_login.html')
+		return redirect('/staff_login')
+	
+	# Get staff's airline to ensure they only see customers from their airline
+	airline_name = session.get('airline_name')
+	if not airline_name:
+		return redirect('/staff_login')
     
 	cursor = conn.cursor()
 	query = '''
@@ -866,9 +885,9 @@ def view_customers(flight_number):
         FROM Customer c
         JOIN Purchases p ON c.email = p.email
         JOIN Ticket t ON p.ticket_id = t.ticket_id
-        WHERE t.flight_number = %s
+        WHERE t.flight_number = %s AND t.airline_name = %s
     '''
-	cursor.execute(query, (flight_number,))
+	cursor.execute(query, (flight_number, airline_name))
 	customers = cursor.fetchall()
 	cursor.close()
 	return render_template('view_customers.html', customers=customers)
@@ -961,7 +980,7 @@ def view_frequent_customersAuth():
 @app.route('/view_customer_flights', methods=['POST'])
 def view_customer_flights():
 	if 'username' not in session:
-		return render_template('staff_login.html')
+		return redirect('/staff_login')
 	
 	airline_name = session['airline_name']
 	customer_email = request.form['customer_email']
