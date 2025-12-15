@@ -887,14 +887,8 @@ def view_flight_ratingsAuth():
     cursor.close()
     return render_template('view_flight_rating.html', flights=flights)
 
-#Authorizes staff to view the frequent customers of the airline
-@app.route('/view_frequent_customersAuth', methods=['GET', 'POST'])
-def view_frequent_customersAuth():
-    if 'username' not in session:
-        return render_template('staff_login.html')
-    
-    airline_name = session['airline_name']
-    
+# Helper function to get most frequent customer (all time)
+def get_most_frequent_customer(airline_name):
     cursor = conn.cursor()
     query = '''
         SELECT c.first_name, c.last_name, COUNT(*) AS num_flights
@@ -902,7 +896,7 @@ def view_frequent_customersAuth():
         JOIN Purchases p ON c.email = p.email
         JOIN Ticket t ON p.ticket_id = t.ticket_id
         JOIN Flight f ON t.flight_number = f.flight_number AND t.airline_name = f.airline_name
-        WHERE f.airline_name = %s AND t.pur_date >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+        WHERE f.airline_name = %s
         GROUP BY c.first_name, c.last_name
         ORDER BY num_flights DESC
         LIMIT 1
@@ -910,6 +904,16 @@ def view_frequent_customersAuth():
     cursor.execute(query, (airline_name,))
     most_frequent_customer = cursor.fetchone()
     cursor.close()
+    return most_frequent_customer
+
+#Authorizes staff to view the frequent customers of the airline
+@app.route('/view_frequent_customersAuth', methods=['GET', 'POST'])
+def view_frequent_customersAuth():
+    if 'username' not in session:
+        return render_template('staff_login.html')
+    
+    airline_name = session['airline_name']
+    most_frequent_customer = get_most_frequent_customer(airline_name)
     return render_template('view_frequent_customer.html', most_frequent_customer=most_frequent_customer)
 
 #Lets staff view customer flights 
@@ -933,7 +937,10 @@ def view_customer_flights():
 	cursor.execute(query, (airline_name, customer_email))
 	customer_flights = cursor.fetchall()
 	cursor.close()
-	return render_template('view_frequent_customer.html', customer_flights=customer_flights)
+	
+	# Also get most frequent customer so it doesn't disappear
+	most_frequent_customer = get_most_frequent_customer(airline_name)
+	return render_template('view_frequent_customer.html', customer_flights=customer_flights, most_frequent_customer=most_frequent_customer)
 
 #Define route of customer logout
 @app.route('/logout')
@@ -1005,7 +1012,12 @@ def view_flight_ratings():
 #Define route for view frequent customers
 @app.route('/view_frequent_customer')
 def view_frequent_customer():
-	return render_template('view_frequent_customer.html')
+	if 'username' not in session:
+		return redirect('/staff_login')
+	
+	airline_name = session['airline_name']
+	most_frequent_customer = get_most_frequent_customer(airline_name)
+	return render_template('view_frequent_customer.html', most_frequent_customer=most_frequent_customer)
 
 #Define route for view earned revenue
 @app.route('/view_revenue')
