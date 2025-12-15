@@ -836,29 +836,54 @@ def view_customers(flight_number):
 @app.route('/view_flight_ratingsAuth', methods=['GET', 'POST'])
 def view_flight_ratingsAuth():
     if 'username' not in session:
-        return render_template('staff_login.html')
+        return redirect('/staff_login')
+    
+    airline_name = session['airline_name']
+    
+    # Get list of flights for dropdown
+    cursor = conn.cursor()
+    query = 'SELECT DISTINCT flight_number FROM Flight WHERE airline_name = %s ORDER BY flight_number'
+    cursor.execute(query, (airline_name,))
+    flights = cursor.fetchall()
     
     if request.method == 'POST':
-        flight_number = request.form['flight_number']
+        flight_number = request.form.get('flight_number')
         
-        cursor = conn.cursor()
-        query = '''
-            SELECT AVG(r.rate) AS average_rating, r.comment, c.first_name, c.last_name
-            FROM Review r
-            JOIN Customer c ON r.email = c.email
-            WHERE r.flight_number = %s
-            GROUP BY r.comment, c.first_name, c.last_name
-        '''
-        cursor.execute(query, (flight_number,))
-        flight_ratings = cursor.fetchall()
-        cursor.close()
-        
-        return render_template('view_flight_rating.html', flight_ratings=flight_ratings)
+        if flight_number:
+            # Get individual reviews for the selected flight
+            query = '''
+                SELECT r.rate, r.comment, c.first_name, c.last_name, r.depart_date, r.depart_time
+                FROM Review r
+                JOIN Customer c ON r.email = c.email
+                WHERE r.flight_number = %s AND r.airline_name = %s
+                ORDER BY r.depart_date DESC, r.depart_time DESC
+            '''
+            cursor.execute(query, (flight_number, airline_name))
+            individual_ratings = cursor.fetchall()
+            
+            # Calculate average rating for the flight
+            query = '''
+                SELECT AVG(r.rate) AS average_rating, COUNT(*) AS total_reviews
+                FROM Review r
+                WHERE r.flight_number = %s AND r.airline_name = %s
+            '''
+            cursor.execute(query, (flight_number, airline_name))
+            avg_result = cursor.fetchone()
+            average_rating = round(avg_result['average_rating'], 1) if avg_result['average_rating'] else 0
+            total_reviews = avg_result['total_reviews'] if avg_result else 0
+            
+            cursor.close()
+            
+            return render_template('view_flight_rating.html', 
+                                 flights=flights,
+                                 flight_number=flight_number,
+                                 individual_ratings=individual_ratings,
+                                 average_rating=average_rating,
+                                 total_reviews=total_reviews)
+        else:
+            cursor.close()
+            return render_template('view_flight_rating.html', flights=flights)
     
-    cursor = conn.cursor()
-    query = 'SELECT DISTINCT flight_number FROM Flight WHERE airline_name = %s'
-    cursor.execute(query, (session['airline_name'],))
-    flights = cursor.fetchall()
     cursor.close()
     return render_template('view_flight_rating.html', flights=flights)
 
@@ -966,7 +991,16 @@ def schedule_maintenance():
 #Define route for view flight rating
 @app.route('/view_flight_rating')
 def view_flight_ratings():
-	return render_template('view_flight_rating.html')
+	if 'username' not in session:
+		return redirect('/staff_login')
+	
+	airline_name = session['airline_name']
+	cursor = conn.cursor()
+	query = 'SELECT DISTINCT flight_number FROM Flight WHERE airline_name = %s ORDER BY flight_number'
+	cursor.execute(query, (airline_name,))
+	flights = cursor.fetchall()
+	cursor.close()
+	return render_template('view_flight_rating.html', flights=flights)
 
 #Define route for view frequent customers
 @app.route('/view_frequent_customer')

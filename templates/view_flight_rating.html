@@ -9,34 +9,48 @@
     <div class="container">
         <form action="/view_flight_ratingsAuth" method="POST">
             <label for="flight_number">Select Flight:</label>
-            <select id="flight_number" name="flight_number">
-                <option value="">All Flights</option>
-                <!-- Add options for flight numbers -->
+            <select id="flight_number" name="flight_number" required>
+                <option value="">-- Select a Flight --</option>
+                {% for flight in flights %}
+                    <option value="{{ flight.flight_number }}" {% if flight_number == flight.flight_number %}selected{% endif %}>
+                        Flight {{ flight.flight_number }}
+                    </option>
+                {% endfor %}
             </select>
-            <br>
+            <br><br>
             <input type="submit" value="View Ratings">
         </form>
-        <!-- Display the average rating and comments for the selected flight -->
-        {% if flight_ratings %}
-            <p>Average Rating: {{ flight_ratings.average_rating }}</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Customer</th>
-                        <th>Rating</th>
-                        <th>Comment</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for rating in flight_ratings.ratings %}
+        
+        {% if flight_number and individual_ratings %}
+            <h2>Ratings for Flight {{ flight_number }}</h2>
+            <p><strong>Average Rating:</strong> {{ "%.1f"|format(average_rating) }} / 5.0 ({{ total_reviews }} review{{ 's' if total_reviews != 1 else '' }})</p>
+            
+            {% if individual_ratings %}
+                <table>
+                    <thead>
                         <tr>
-                            <td>{{ rating.customer }}</td>
-                            <td>{{ rating.rating }}</td>
-                            <td>{{ rating.comment }}</td>
+                            <th>Customer</th>
+                            <th>Rating</th>
+                            <th>Comment</th>
+                            <th>Flight Date</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for rating in individual_ratings %}
+                            <tr>
+                                <td>{{ rating.first_name }} {{ rating.last_name }}</td>
+                                <td>{{ rating.rate }} / 5</td>
+                                <td>{{ rating.comment }}</td>
+                                <td>{{ rating.depart_date }} {{ rating.depart_time }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No ratings found for this flight.</p>
+            {% endif %}
+        {% elif flight_number %}
+            <p>No ratings found for Flight {{ flight_number }}.</p>
         {% endif %}
     </div>
     <div class="go-back">
