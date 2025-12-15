@@ -910,39 +910,6 @@ def view_customer_flights():
 	cursor.close()
 	return render_template('view_frequent_customer.html', customer_flights=customer_flights)
 
-#Authorizes staff to view the earned revenue 
-@app.route('/view_revenueAuth')
-def view_revenueAuth():
-	if 'username' not in session:
-		return render_template('staff_login.html')
-    
-	cursor = conn.cursor()
-
-	#Get airline name for the staff
-	airline_name = session['airline_name']
-
-    # Calculate revenue for the last month
-	query = '''
-        SELECT COALESCE(SUM(t.ticket_price), 0) AS revenue
-        FROM Ticket t
-        JOIN Flight f ON t.flight_number = f.flight_number AND t.airline_name = f.airline_name AND t.depart_date = f.depart_date AND t.depart_time = f.depart_time
-        WHERE f.airline_name = %s AND t.pur_date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
-    '''
-	cursor.execute(query, (airline_name,))
-	revenue_last_month = cursor.fetchone()['revenue']
-
-	# Calculate revenue for the last year
-	query = '''
-        SELECT COALESCE(SUM(t.ticket_price), 0) AS revenue
-        FROM Ticket t
-        JOIN Flight f ON t.flight_number = f.flight_number AND t.airline_name = f.airline_name AND t.depart_date = f.depart_date AND t.depart_time = f.depart_time
-        WHERE f.airline_name = %s AND t.pur_date >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
-    '''
-	cursor.execute(query, (airline_name,))
-	revenue_last_year = cursor.fetchone()['revenue']
-	cursor.close()
-	return render_template('view_revenue.html', revenue_last_month=revenue_last_month, revenue_last_year=revenue_last_year)
-
 #Define route of customer logout
 @app.route('/logout')
 def logout():
@@ -1009,7 +976,53 @@ def view_frequent_customer():
 #Define route for view earned revenue
 @app.route('/view_revenue')
 def view_revenue():
-	return render_template('view_revenue.html')
+	if 'username' not in session:
+		return redirect('/staff_login')
+	
+	cursor = conn.cursor()
+
+	#Get airline name for the staff
+	airline_name = session['airline_name']
+
+	# Calculate revenue for the last month, use COALESCE to handle NULL values
+	query = '''
+        SELECT COALESCE(SUM(t.ticket_price), 0) AS revenue
+        FROM Ticket t
+        JOIN Flight f ON t.flight_number = f.flight_number AND t.airline_name = f.airline_name AND t.depart_date = f.depart_date AND t.depart_time = f.depart_time
+        WHERE f.airline_name = %s AND t.pur_date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+    '''
+	cursor.execute(query, (airline_name,))
+	result = cursor.fetchone()
+	revenue_last_month = result['revenue'] if result else 0
+
+	# Calculate revenue for the last year
+	query = '''
+        SELECT COALESCE(SUM(t.ticket_price), 0) AS revenue
+        FROM Ticket t
+        JOIN Flight f ON t.flight_number = f.flight_number AND t.airline_name = f.airline_name AND t.depart_date = f.depart_date AND t.depart_time = f.depart_time
+        WHERE f.airline_name = %s AND t.pur_date >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+    '''
+	cursor.execute(query, (airline_name,))
+	result = cursor.fetchone()
+	revenue_last_year = result['revenue'] if result else 0
+	
+	# Calculate total revenue (all time)
+	query = '''
+        SELECT COALESCE(SUM(t.ticket_price), 0) AS revenue
+        FROM Ticket t
+        JOIN Flight f ON t.flight_number = f.flight_number AND t.airline_name = f.airline_name AND t.depart_date = f.depart_date AND t.depart_time = f.depart_time
+        WHERE f.airline_name = %s
+    '''
+	cursor.execute(query, (airline_name,))
+	result = cursor.fetchone()
+	total_revenue = result['revenue'] if result else 0
+	
+	cursor.close()
+	return render_template('view_revenue.html', 
+						 revenue_last_month=revenue_last_month, 
+						 revenue_last_year=revenue_last_year,
+						 total_revenue=total_revenue,
+						 airline_name=airline_name)
 
 #Define route for customer to give rating and comments 
 @app.route('/give_ratings_comments')

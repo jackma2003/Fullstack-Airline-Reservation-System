@@ -7,9 +7,11 @@
 <body>
     <h1>View Earned Revenue</h1>
     <div class="container">
+        <h2>Airline: {{ airline_name }}</h2>
         <!-- Display the total revenue earned in the last month and last year -->
-        <p>Revenue (Last Month): ${{ revenue_last_month }}</p>
-        <p>Revenue (Last Year): ${{ revenue_last_year }}</p>
+        <p><strong>Total Revenue (All Time):</strong> ${{ total_revenue }}</p>
+        <p><strong>Revenue (Last Month):</strong> ${{ revenue_last_month }}</p>
+        <p><strong>Revenue (Last Year):</strong> ${{ revenue_last_year }}</p>
     </div>
     <div class="go-back">
         <a href="/staff_home"><button>Go Back</button></a>
