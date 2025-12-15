@@ -173,7 +173,7 @@ def loginAuthStaff():
 		error = 'Invalid login information'
 		return render_template('staff_login.html', error=error)
 
-#Authenticates the registration for Customers
+#Authenticates the registration for Staff
 @app.route('/registerAuthStaff', methods=['GET', 'POST'])
 def registerAuthStaff():
 	#grabs information from the forms
@@ -206,6 +206,10 @@ def registerAuthStaff():
 
 @app.route('/flights', methods=['GET', 'POST'])
 def flights():
+	# Check if user is logged in
+	if 'email' not in session:
+		return redirect('/customer_login')
+	
 	selected = request.form.get('flight_type')
 	source = request.form['source']
 	destination = request.form['destination']
