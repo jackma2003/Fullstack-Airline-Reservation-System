@@ -573,20 +573,8 @@ def purchaseAuth():
 		
 		cursor.close()
 
-		if action == 'Buy Another':
-			session['card_type'] = card_type
-			session['card_name'] = card_name
-			session['card_num'] = card_num
-			session['exp_date'] = exp_date
-
-			if session['flight_type'] == 'one-way':
-				return render_template('purchase.html', buy_another = action, email = email, card_type = card_type, card_name = card_name, card_num = card_num, exp_date = exp_date, flight_type = session['flight_type'], ticket_price = session['ticket_price'])
-			else:
-				return render_template('purchase.html', buy_another = action, email = email, card_type = card_type, card_name = card_name, card_num = card_num, exp_date = exp_date, 
-							  flight_type = session['flight_type'], ticket_price = session['ticket_price'], depart_ticket_price = session['depart_ticket_price'], return_ticket_price = session['return_ticket_price'], total = session['total'])
-		else:
-			#done
-			return redirect('/customer_home')
+		# Purchase complete, redirect to customer home
+		return redirect('/customer_home')
 			
 	except Exception as e:
 		if 'cursor' in locals():
@@ -653,24 +641,6 @@ def create_flightAuth():
 
 		cursor = conn.cursor()
 
-		#Edge case: Check if airplane is under maintenance during flight period
-		# checks if flight period is in between the maintenance time 
-		# query = '''
-        #     SELECT COUNT(*) AS count
-        #     FROM Airplane
-        #     WHERE airplane_id = %s AND airline_name = %s
-        #     AND (
-        #         (maintenance_start <= %s AND maintenance_end >= %s) OR
-        #         (maintenance_start <= %s AND maintenance_end >= %s))
-        # '''
-		# cursor.execute(query, (airplane_id, airline_name, depart_date, arrival_date))
-		# result = cursor.fetchone()
-
-		# if result['count'] > 0:
-		# 	error = "The airplane is under maintenance during this flight period. Please choose a different airplane or a different flight schedule"
-		# 	return render_template('create_flight.html', error=error)
-
-		#Inserts new flight into the database
 		query = '''
             INSERT INTO Flight (flight_number, airline_name, depart_date, depart_time, airplane_name, airplane_id, arrival_time, arrival_date, base_price, flight_status, depart_airport, arrival_airport)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -1079,33 +1049,64 @@ def give_ratings_comments():
 #Lets user to give ratings and comments for prev flights they being on
 @app.route('/give_ratings_commentsAuth', methods=['GET', 'POST'])
 def give_ratings_commentsAuth():
+	# Clear editing session if canceling
+	if request.method == 'GET':
+		session.pop('editing_review', None)
+		session.pop('edit_airline_name', None)
+		session.pop('edit_flight_number', None)
+		session.pop('edit_depart_date', None)
+		session.pop('edit_depart_time', None)
 	
-    email = session['email']
-    ticket_id = request.form.get('ticket_id')
-    session['ticket_id']  = request.form.get('ticket_id')# create session for ticket_id 
+	email = session['email']
+	ticket_id = request.form.get('ticket_id')
+	if ticket_id:
+		session['ticket_id'] = ticket_id  # create session for ticket_id 
 	
-    print("GOTTEN TICKET ID IS:")
-    print(ticket_id)
-    cursor = conn.cursor()
+	print("GOTTEN TICKET ID IS:")
+	print(ticket_id)
+	cursor = conn.cursor()
 
-    query = '''SELECT ticket_id 
-                FROM flight NATURAL JOIN ticket
-                WHERE ((arrival_date < CURDATE()) OR 
-                (arrival_date = CURDATE() AND arrival_time < CURTIME())) AND 
-                ticket_id IN( SELECT ticket_id 
-                                    FROM ticket 
-                                    WHERE ticket_id IN( SELECT ticket_id 
-                                                        FROM purchases as P 
-                                                        WHERE P.email = %s))'''
+	query = '''SELECT t.ticket_id 
+				FROM flight f NATURAL JOIN ticket t
+				WHERE ((f.arrival_date < CURDATE()) OR 
+				(f.arrival_date = CURDATE() AND f.arrival_time < CURTIME())) AND 
+				t.ticket_id IN( SELECT ticket_id 
+									FROM ticket 
+									WHERE ticket_id IN( SELECT ticket_id 
+														FROM purchases as P 
+														WHERE P.email = %s))
+				AND NOT EXISTS (
+					SELECT 1 FROM Review r
+					WHERE r.email = %s 
+					AND r.airline_name = t.airline_name
+					AND r.flight_number = t.flight_number
+					AND r.depart_date = t.depart_date
+					AND r.depart_time = t.depart_time
+				)'''
 
-
-    cursor.execute(query, (email))
-    tickets = cursor.fetchall()
+	cursor.execute(query, (email, email))
+	tickets = cursor.fetchall()
 	
-    print("ALL PAST FLIGHTS")
-    print(tickets)
-    cursor.close()
-    return render_template('give_ratings_comments.html', previous_tickets = tickets)
+	# Get all existing reviews for this customer
+	reviews_query = '''
+		SELECT r.rate, r.comment, r.airline_name, r.flight_number, r.depart_date, r.depart_time,
+			   f.depart_airport, f.arrival_airport
+		FROM Review r
+		JOIN Flight f ON r.airline_name = f.airline_name 
+			AND r.flight_number = f.flight_number 
+			AND r.depart_date = f.depart_date 
+			AND r.depart_time = f.depart_time
+		WHERE r.email = %s
+		ORDER BY r.depart_date DESC, r.depart_time DESC
+	'''
+	cursor.execute(reviews_query, (email,))
+	existing_reviews = cursor.fetchall()
+	
+	print("ALL PAST FLIGHTS")
+	print(tickets)
+	cursor.close()
+	error = session.pop('error', None)
+	return render_template('give_ratings_comments.html', previous_tickets=tickets, existing_reviews=existing_reviews, error=error)
 
 		
 
@@ -1114,17 +1115,47 @@ def post_ratings_comments():
 	email = session['email']
 	rate = request.form['rating']
 	comment = request.form['comment']
-	ticket_id = session['ticket_id']
+	
+	cursor = conn.cursor()
+	
+	# Check if we're editing (from session) or creating new
+	if session.get('editing_review'):
+		# Update existing review using session data
+		edit_airline = session.pop('edit_airline_name', None)
+		edit_flight = session.pop('edit_flight_number', None)
+		edit_date = session.pop('edit_depart_date', None)
+		edit_time = session.pop('edit_depart_time', None)
+		session.pop('editing_review', None)
+		
+		update_review = '''UPDATE Review 
+						   SET rate = %s, comment = %s
+						   WHERE email = %s AND airline_name = %s AND flight_number = %s 
+						   AND depart_date = %s AND depart_time = %s'''
+		cursor.execute(update_review, (rate, comment, email, edit_airline, edit_flight, edit_date, edit_time))
+		conn.commit()
+		cursor.close()
+		return redirect('/give_ratings_commentsAuth')
+	
+	# Creating new review - need ticket_id
+	ticket_id = session.get('ticket_id')
+	if not ticket_id:
+		cursor.close()
+		session['error'] = "Please select a ticket first."
+		return redirect('/give_ratings_commentsAuth')
 
 	print("TICKET_ID IS: ")
 	print(ticket_id)
 
-	cursor = conn.cursor()
 	ticket_find = '''SELECT * 
 			FROM ticket
 			WHERE ticket_id = %s'''
 	cursor.execute(ticket_find, (ticket_id,))
 	ticket = cursor.fetchone()
+
+	if not ticket:
+		cursor.close()
+		session['error'] = "Ticket not found."
+		return redirect('/give_ratings_commentsAuth')
 
 	print(ticket)
 	
@@ -1133,17 +1164,130 @@ def post_ratings_comments():
 	depart_date = ticket['depart_date']
 	depart_time = ticket['depart_time']
 
-
+	# Check if review already exists (prevent duplicates for new reviews)
+	check_review = '''SELECT * FROM Review 
+					  WHERE email = %s AND airline_name = %s AND flight_number = %s 
+					  AND depart_date = %s AND depart_time = %s'''
+	cursor.execute(check_review, (email, airline_name, flight_number, depart_date, depart_time))
+	existing_review = cursor.fetchone()
+	
+	if existing_review:
+		cursor.close()
+		session['error'] = "You have already submitted a review for this flight."
+		return redirect('/give_ratings_commentsAuth')
+	
+	# Insert new review
 	review_post = '''INSERT INTO Review(email, airline_name, flight_number, depart_date, depart_time, rate, comment)
 	VALUES(%s, %s, %s, %s, %s, %s, %s)'''
-
 	cursor.execute(review_post, (email, airline_name, flight_number, depart_date, depart_time, rate, comment))
+	
 	conn.commit()
 	cursor.close()
 	
+	# Clear ticket_id from session after successful submission
+	session.pop('ticket_id', None)
 	
+	return redirect('/give_ratings_commentsAuth')
+
+#Route to edit a review - loads review data into form
+@app.route('/edit_review', methods=['POST'])
+def edit_review():
+	if 'email' not in session:
+		return redirect('/customer_login')
 	
-	return redirect('/customer_home')
+	email = session['email']
+	airline_name = request.form['airline_name']
+	flight_number = request.form['flight_number']
+	depart_date = request.form['depart_date']
+	depart_time = request.form['depart_time']
+	
+	cursor = conn.cursor()
+	query = '''SELECT r.rate, r.comment, r.airline_name, r.flight_number, r.depart_date, r.depart_time,
+	           f.depart_airport, f.arrival_airport
+	           FROM Review r
+	           JOIN Flight f ON r.airline_name = f.airline_name 
+	               AND r.flight_number = f.flight_number 
+	               AND r.depart_date = f.depart_date 
+	               AND r.depart_time = f.depart_time
+	           WHERE r.email = %s AND r.airline_name = %s AND r.flight_number = %s 
+	           AND r.depart_date = %s AND r.depart_time = %s'''
+	cursor.execute(query, (email, airline_name, flight_number, depart_date, depart_time))
+	review = cursor.fetchone()
+	
+	# Get tickets for dropdown
+	tickets_query = '''SELECT t.ticket_id 
+	                FROM flight f NATURAL JOIN ticket t
+	                WHERE ((f.arrival_date < CURDATE()) OR 
+	                (f.arrival_date = CURDATE() AND f.arrival_time < CURTIME())) AND 
+	                t.ticket_id IN( SELECT ticket_id 
+	                                    FROM ticket 
+	                                    WHERE ticket_id IN( SELECT ticket_id 
+	                                                        FROM purchases as P 
+	                                                        WHERE P.email = %s))
+	                AND NOT EXISTS (
+	                    SELECT 1 FROM Review r
+	                    WHERE r.email = %s 
+	                    AND r.airline_name = t.airline_name
+	                    AND r.flight_number = t.flight_number
+	                    AND r.depart_date = t.depart_date
+	                    AND r.depart_time = t.depart_time
+	                )'''
+	cursor.execute(tickets_query, (email, email))
+	tickets = cursor.fetchall()
+	
+	# Get all existing reviews
+	reviews_query = '''
+        SELECT r.rate, r.comment, r.airline_name, r.flight_number, r.depart_date, r.depart_time,
+               f.depart_airport, f.arrival_airport
+        FROM Review r
+        JOIN Flight f ON r.airline_name = f.airline_name 
+            AND r.flight_number = f.flight_number 
+            AND r.depart_date = f.depart_date 
+            AND r.depart_time = f.depart_time
+        WHERE r.email = %s
+        ORDER BY r.depart_date DESC, r.depart_time DESC
+    '''
+	cursor.execute(reviews_query, (email,))
+	existing_reviews = cursor.fetchall()
+	
+	cursor.close()
+	
+	# Store review info in session for editing
+	session['editing_review'] = True
+	session['edit_airline_name'] = airline_name
+	session['edit_flight_number'] = flight_number
+	session['edit_depart_date'] = depart_date
+	session['edit_depart_time'] = depart_time
+	
+	return render_template('give_ratings_comments.html', 
+	                     previous_tickets=tickets, 
+	                     existing_reviews=existing_reviews,
+	                     editing_review=review)
+
+#Route to delete a review
+@app.route('/delete_review', methods=['POST'])
+def delete_review():
+	if 'email' not in session:
+		return redirect('/customer_login')
+	
+	email = session['email']
+	airline_name = request.form['airline_name']
+	flight_number = request.form['flight_number']
+	depart_date = request.form['depart_date']
+	depart_time = request.form['depart_time']
+	
+	cursor = conn.cursor()
+	delete_query = '''DELETE FROM Review 
+	                  WHERE email = %s AND airline_name = %s AND flight_number = %s 
+	                  AND depart_date = %s AND depart_time = %s'''
+	cursor.execute(delete_query, (email, airline_name, flight_number, depart_date, depart_time))
+	conn.commit()
+	cursor.close()
+	
+	# Clear ticket_id from session so user can select a new ticket
+	session.pop('ticket_id', None)
+	
+	return redirect('/give_ratings_commentsAuth')
 
 #Define route for customer to track spending
 @app.route('/track_spending')

@@ -11,6 +11,11 @@
     <h1>Welcome Back, {{first_name}}</h1>
     </form>
     <div class="container">
+        {% if error %}
+            <div style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
+                <strong>Error:</strong> {{ error }}
+            </div>
+        {% endif %}
         <h2>My Flights</h2>
         <table>
             <thead>

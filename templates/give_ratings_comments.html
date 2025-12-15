@@ -7,36 +7,84 @@
 <body>
     <h1>Give Rating and Comment</h1>
     <div class="container">
-        <form action='/give_ratings_commentsAuth' method = "POST">
-            <label for="ticket_id">Ticket ID:</label>
-            
-            <select  name="ticket_id" id="ticket_id" required>
+        {% if error %}
+            <div style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
+                <strong>Error:</strong> {{ error }}
+            </div>
+        {% endif %}
+        <h2>Create New Review</h2>
+        <form action='/give_ratings_commentsAuth' method="POST">
+            <label for="ticket_id">Select Ticket ID:</label>
+            <select name="ticket_id" id="ticket_id" required onchange="this.form.submit()">
                 <option value="">Select a Ticket ID</option>
                 {% for ticket in previous_tickets %}
-                    <option value="{{ ticket['ticket_id'] }}">{{ ticket['ticket_id'] }}</option>
+                    <option value="{{ ticket['ticket_id'] }}" {% if session.get('ticket_id') == ticket['ticket_id'] %}selected{% endif %}>{{ ticket['ticket_id'] }}</option>
                 {% endfor %}
             </select>
-            <input type ="submit" value = "Select">
         </form>
 
-        <form action ='/post_ratings_comments' method = "POST"> 
+        <form action='/post_ratings_comments' method="POST"> 
             <label for="rating">Rating:</label>
             <select name="rating" id="rating" required>
                 <option value="">Select a rating</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
+                <option value="1" {% if editing_review and editing_review.rate == 1 %}selected{% endif %}>1</option>
+                <option value="2" {% if editing_review and editing_review.rate == 2 %}selected{% endif %}>2</option>
+                <option value="3" {% if editing_review and editing_review.rate == 3 %}selected{% endif %}>3</option>
+                <option value="4" {% if editing_review and editing_review.rate == 4 %}selected{% endif %}>4</option>
+                <option value="5" {% if editing_review and editing_review.rate == 5 %}selected{% endif %}>5</option>
             </select>
-            <br>
+            <br><br>
             <label for="comment">Comment:</label>
-            <textarea name="comment" id="comment" required></textarea>
-            <br>
-            <input type="submit">Submit</input>
+            <textarea name="comment" id="comment" rows="4" required>{% if editing_review %}{{ editing_review.comment }}{% endif %}</textarea>
+            <br><br>
+            <input type="submit" value="{% if editing_review %}Update Review{% else %}Submit{% endif %}">
+            {% if editing_review %}
+                <a href="/give_ratings_commentsAuth" style="margin-left: 10px; padding: 8px 15px; background-color: #95a5a6; color: white; text-decoration: none; border-radius: 4px;">Cancel</a>
+            {% endif %}
         </form>
-           
-        
+
+        {% if existing_reviews %}
+            <h2 style="margin-top: 40px;">Your Reviews</h2>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                <thead>
+                    <tr style="background-color: #3498db; color: white;">
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Flight</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Route</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Date</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Rating</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Comment</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for review in existing_reviews %}
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 12px;">{{ review.airline_name }} {{ review.flight_number }}</td>
+                            <td style="padding: 12px;">{{ review.depart_airport }} → {{ review.arrival_airport }}</td>
+                            <td style="padding: 12px;">{{ review.depart_date }} {{ review.depart_time }}</td>
+                            <td style="padding: 12px;">{{ review.rate }}/5</td>
+                            <td style="padding: 12px;">{{ review.comment }}</td>
+                            <td style="padding: 12px;">
+                                <form action="/edit_review" method="POST" style="display: inline;">
+                                    <input type="hidden" name="airline_name" value="{{ review.airline_name }}">
+                                    <input type="hidden" name="flight_number" value="{{ review.flight_number }}">
+                                    <input type="hidden" name="depart_date" value="{{ review.depart_date }}">
+                                    <input type="hidden" name="depart_time" value="{{ review.depart_time }}">
+                                    <input type="submit" value="Edit" style="background-color: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-right: 5px;">
+                                </form>
+                                <form action="/delete_review" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this review?');">
+                                    <input type="hidden" name="airline_name" value="{{ review.airline_name }}">
+                                    <input type="hidden" name="flight_number" value="{{ review.flight_number }}">
+                                    <input type="hidden" name="depart_date" value="{{ review.depart_date }}">
+                                    <input type="hidden" name="depart_time" value="{{ review.depart_time }}">
+                                    <input type="submit" value="Delete" style="background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
     </div>
     <div class="go-back">
         <a href="/customer_home"><button>Go Back</button></a>
