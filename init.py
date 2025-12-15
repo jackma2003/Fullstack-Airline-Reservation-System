@@ -375,18 +375,18 @@ def purchase():
 		cursor.execute(num_reserved, (flight_num, depart_date, depart_time, airline_name))
 		res = cursor.fetchone()
 		reserved = res['reserved']
-		print(f"reserved: {reserved}")
-
 		#find total seats for a specific flight
 		cursor.execute(num_seats, (airline_name, airplane_id, flight_num, depart_date, depart_time))
 		seats = cursor.fetchall()
 		flight_seats = seats[0]['seats']
-		print(f"available seats: {flight_seats}")
 
 		#flight percent capacity filled 
+		if flight_seats == 0:
+			cursor.close()
+			session['error'] = "Flight has no available seats."
+			return redirect('/customer_home')
+		
 		capacity_filled = reserved / flight_seats
-		print(capacity_filled)
-
 		session['capacity_filled'] = capacity_filled
 
 		#obtain base price
@@ -394,6 +394,7 @@ def purchase():
 		price = cursor.fetchall()
 		base_price = price[0]['base_price']
 
+		# if capacity is greater than 80%, increase price by 25%
 		if capacity_filled > 0.8:
 			base_price *= 1.25
 
@@ -508,6 +509,21 @@ def purchaseAuth():
 			#increments the num value next to 'T' by 1 to generate new id
 			new_ticket_id = f"T{int(largest_id['recent_id'][1:len(largest_id['recent_id'])]) + 1}"
 
+		# Define queries for capacity checking
+		num_reserved = '''SELECT COUNT(ticket_id) as reserved
+						 FROM ticket
+						 WHERE ticket.flight_number = %s AND
+						 ticket.depart_date = %s AND
+						 ticket.depart_time = %s AND
+						 ticket.airline_name = %s'''
+		
+		num_seats = '''SELECT seats 
+					  FROM airplane JOIN flight ON airplane.airline_name = flight.airline_name AND airplane.airplane_id = flight.airplane_id
+					  WHERE airplane.airline_name = %s AND
+					  airplane.airplane_id = %s AND
+					  flight.flight_number = %s AND
+					  flight.depart_date = %s AND
+					  flight.depart_time = %s'''
 		
 		add_ticket = '''INSERT INTO ticket (ticket_id, flight_number, airline_name, depart_date, depart_time, 
 				   ticket_price, card_type, card_num, card_name, exp_date, pur_date, pur_time)
@@ -531,8 +547,32 @@ def purchaseAuth():
 				session['error'] = "Missing flight information. Please try selecting the flight again."
 				return redirect('/customer_home')
 
-			#CHECK IF FLIGHT CAPACITY IS 80% OR FULL
-			if 'capacity_filled' in session and session['capacity_filled'] == 1:
+			#CHECK IF FLIGHT CAPACITY IS FULL (re-check at purchase time to prevent race conditions)
+			# Re-calculate capacity to ensure accuracy
+			cursor.execute(num_reserved, (session['flight_num'], session['depart_date'], session['depart_time'], session['airline_name']))
+			res = cursor.fetchone()
+			current_reserved = res['reserved']
+			
+			# Get airplane_id from flight table
+			get_airplane_id = '''SELECT airplane_id FROM flight 
+								WHERE flight_number = %s AND airline_name = %s 
+								AND depart_date = %s AND depart_time = %s'''
+			cursor.execute(get_airplane_id, (session['flight_num'], session['airline_name'], session['depart_date'], session['depart_time']))
+			flight_data = cursor.fetchone()
+			airplane_id = flight_data['airplane_id']
+			
+			cursor.execute(num_seats, (session['airline_name'], airplane_id, session['flight_num'], session['depart_date'], session['depart_time']))
+			seats = cursor.fetchall()
+			current_seats = seats[0]['seats']
+			
+			if current_seats == 0:
+				cursor.close()
+				session['error'] = "Flight has no available seats."
+				return redirect('/customer_home')
+			
+			current_capacity = current_reserved / current_seats
+			
+			if current_capacity >= 1.0:
 				cursor.close()
 				session['error'] = "Selected Flight has no more available seats"
 				return redirect('/customer_home')
@@ -556,8 +596,54 @@ def purchaseAuth():
 				session['error'] = "Missing return flight information. Please try selecting the flight again."
 				return redirect('/customer_home')
 
-			#CHECK IF FLIGHT CAPACITY IS 80% OR FULL
-			if ('depart_capacity_filled' in session and session['depart_capacity_filled'] == 1) or ('return_capacity_filled' in session and session['return_capacity_filled'] == 1):
+			#CHECK IF FLIGHT CAPACITY IS FULL (re-check at purchase time to prevent race conditions)
+			# Re-calculate capacity for departure flight
+			cursor.execute(num_reserved, (session['departing_flight_num'], session['departing_depart_date'], session['departing_depart_time'], session['departing_airline_name']))
+			depart_res = cursor.fetchone()
+			depart_current_reserved = depart_res['reserved']
+			
+			get_depart_airplane_id = '''SELECT airplane_id FROM flight 
+										WHERE flight_number = %s AND airline_name = %s 
+										AND depart_date = %s AND depart_time = %s'''
+			cursor.execute(get_depart_airplane_id, (session['departing_flight_num'], session['departing_airline_name'], session['departing_depart_date'], session['departing_depart_time']))
+			depart_flight_data = cursor.fetchone()
+			depart_airplane_id = depart_flight_data['airplane_id']
+			
+			cursor.execute(num_seats, (session['departing_airline_name'], depart_airplane_id, session['departing_flight_num'], session['departing_depart_date'], session['departing_depart_time']))
+			depart_seats = cursor.fetchall()
+			depart_current_seats = depart_seats[0]['seats']
+			
+			if depart_current_seats == 0:
+				cursor.close()
+				session['error'] = "Departure flight has no available seats."
+				return redirect('/customer_home')
+			
+			depart_current_capacity = depart_current_reserved / depart_current_seats
+			
+			# Re-calculate capacity for return flight
+			cursor.execute(num_reserved, (session['returning_flight_num'], session['returning_depart_date'], session['returning_depart_time'], session['returning_airline_name']))
+			return_res = cursor.fetchone()
+			return_current_reserved = return_res['reserved']
+			
+			get_return_airplane_id = '''SELECT airplane_id FROM flight 
+										 WHERE flight_number = %s AND airline_name = %s 
+										 AND depart_date = %s AND depart_time = %s'''
+			cursor.execute(get_return_airplane_id, (session['returning_flight_num'], session['returning_airline_name'], session['returning_depart_date'], session['returning_depart_time']))
+			return_flight_data = cursor.fetchone()
+			return_airplane_id = return_flight_data['airplane_id']
+			
+			cursor.execute(num_seats, (session['returning_airline_name'], return_airplane_id, session['returning_flight_num'], session['returning_depart_date'], session['returning_depart_time']))
+			return_seats = cursor.fetchall()
+			return_current_seats = return_seats[0]['seats']
+			
+			if return_current_seats == 0:
+				cursor.close()
+				session['error'] = "Return flight has no available seats."
+				return redirect('/customer_home')
+			
+			return_current_capacity = return_current_reserved / return_current_seats
+			
+			if depart_current_capacity >= 1.0 or return_current_capacity >= 1.0:
 				cursor.close()
 				session['error'] = "One or Both of Selected Flights has no more available seats"
 				return redirect('/customer_home')
@@ -899,7 +985,7 @@ def view_flight_ratingsAuth():
         return redirect('/staff_login')
     
     airline_name = session['airline_name']
-    
+        
     # Get list of flights for dropdown
     cursor = conn.cursor()
     query = 'SELECT DISTINCT flight_number FROM Flight WHERE airline_name = %s ORDER BY flight_number'
@@ -1152,8 +1238,6 @@ def give_ratings_commentsAuth():
 	if ticket_id:
 		session['ticket_id'] = ticket_id  # create session for ticket_id 
 	
-	print("GOTTEN TICKET ID IS:")
-	print(ticket_id)
 	cursor = conn.cursor()
 
 	query = '''SELECT t.ticket_id 
@@ -1161,9 +1245,9 @@ def give_ratings_commentsAuth():
 				WHERE ((f.arrival_date < CURDATE()) OR 
 				(f.arrival_date = CURDATE() AND f.arrival_time < CURTIME())) AND 
 				t.ticket_id IN( SELECT ticket_id 
-									FROM ticket 
-									WHERE ticket_id IN( SELECT ticket_id 
-														FROM purchases as P 
+                                    FROM ticket 
+                                    WHERE ticket_id IN( SELECT ticket_id 
+                                                        FROM purchases as P 
 														WHERE P.email = %s))
 				AND NOT EXISTS (
 					SELECT 1 FROM Review r
@@ -1192,8 +1276,6 @@ def give_ratings_commentsAuth():
 	cursor.execute(reviews_query, (email,))
 	existing_reviews = cursor.fetchall()
 	
-	print("ALL PAST FLIGHTS")
-	print(tickets)
 	cursor.close()
 	error = session.pop('error', None)
 	return render_template('give_ratings_comments.html', previous_tickets=tickets, existing_reviews=existing_reviews, error=error)
