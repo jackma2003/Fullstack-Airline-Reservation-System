@@ -641,6 +641,23 @@ def create_flightAuth():
 
 		cursor = conn.cursor()
 
+		# Edge case: Check if airplane is under maintenance during flight period
+		# Check if flight period overlaps with maintenance period
+		# Overlap occurs when: maintenance_start <= arrival_date AND maintenance_end >= depart_date
+		maintenance_check = '''
+			SELECT maintenance_start, maintenance_end
+			FROM Airplane
+			WHERE airplane_id = %s AND airline_name = %s
+			AND maintenance_start <= %s AND maintenance_end >= %s
+		'''
+		cursor.execute(maintenance_check, (airplane_id, airline_name, arrival_date, depart_date))
+		maintenance_result = cursor.fetchone()
+
+		if maintenance_result:
+			cursor.close()
+			error = f"The airplane is under maintenance from {maintenance_result['maintenance_start']} to {maintenance_result['maintenance_end']}, which overlaps with the flight period ({depart_date} to {arrival_date}). Please choose a different airplane or adjust the flight schedule."
+			return render_template('create_flight.html', error=error)
+
 		query = '''
             INSERT INTO Flight (flight_number, airline_name, depart_date, depart_time, airplane_name, airplane_id, arrival_time, arrival_date, base_price, flight_status, depart_airport, arrival_airport)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
