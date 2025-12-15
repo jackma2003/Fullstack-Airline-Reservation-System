@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Spending Report</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Spending Report for {{ first_name }}</h1>
+    <div class="container">
+        <h2>Summary</h2>
+        <div class="spending-summary">
+            <p><strong>Total Spending (All Time):</strong> ${{ total_spending }}</p>
+        </div>
+
+        <h2>Spending by Year</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Year</th>
+                    <th>Total Spent</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for year, amount in yearly_spending.items()|sort(reverse=True) %}
+                <tr>
+                    <td>{{ year }}</td>
+                    <td>${{ amount }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>All Purchases</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Ticket ID</th>
+                    <th>Purchase Date</th>
+                    <th>Airline</th>
+                    <th>Flight Number</th>
+                    <th>Departure</th>
+                    <th>Arrival</th>
+                    <th>Departure Date</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in all_tickets %}
+                <tr>
+                    <td>{{ ticket.ticket_id }}</td>
+                    <td>{{ ticket.pur_date }} {{ ticket.pur_time }}</td>
+                    <td>{{ ticket.airline_name }}</td>
+                    <td>{{ ticket.flight_number }}</td>
+                    <td>{{ ticket.depart_airport }}</td>
+                    <td>{{ ticket.arrival_airport }}</td>
+                    <td>{{ ticket.depart_date }} {{ ticket.depart_time }}</td>
+                    <td>${{ ticket.ticket_price }}</td>
+                </tr>
+                {% endfor %}
+                {% if not all_tickets %}
+                <tr>
+                    <td colspan="8">No purchases found.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    <div class="go-back">
+        <a href="/customer_home"><button>Go Back to Home</button></a>
+    </div>
+</body>
+</html>
+

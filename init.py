@@ -1,6 +1,6 @@
 #Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pymysql.cursors
 
@@ -1086,7 +1086,53 @@ def post_ratings_comments():
 	
 	return redirect('/customer_home')
 
+#Define route for customer to track spending
+@app.route('/track_spending')
+def track_spending():
+	if 'email' not in session:
+		return redirect('/customer_login')
 	
+	email = session['email']
+	cursor = conn.cursor()
+	
+	# Get all tickets purchased by the customer with flight details
+	query = '''
+		SELECT t.ticket_id, t.ticket_price, t.pur_date, t.pur_time,
+			   f.airline_name, f.flight_number, f.depart_date, f.depart_time,
+			   f.depart_airport, f.arrival_airport, f.arrival_date, f.arrival_time
+		FROM Ticket t
+		JOIN Purchases p ON t.ticket_id = p.ticket_id
+		JOIN Flight f ON t.airline_name = f.airline_name 
+			AND t.flight_number = f.flight_number 
+			AND t.depart_date = f.depart_date 
+			AND t.depart_time = f.depart_time
+		WHERE p.email = %s
+		ORDER BY t.pur_date DESC, t.pur_time DESC
+	'''
+	cursor.execute(query, (email,))
+	all_tickets = cursor.fetchall()
+	
+	# Calculate total spending (all time)
+	total_spending = sum(ticket['ticket_price'] for ticket in all_tickets)
+	
+	# Calculate spending by year
+	yearly_spending = {}
+	for ticket in all_tickets:
+		pur_date = ticket['pur_date']
+		if isinstance(pur_date, str):
+			pur_date = datetime.strptime(pur_date, '%Y-%m-%d').date()
+		year_key = pur_date.strftime('%Y')
+		if year_key not in yearly_spending:
+			yearly_spending[year_key] = 0
+		yearly_spending[year_key] += ticket['ticket_price']
+	
+	cursor.close()
+	
+	return render_template('track_spending.html', 
+						 all_tickets=all_tickets,
+						 total_spending=total_spending,
+						 yearly_spending=yearly_spending,
+						 first_name=session.get('first_name', 'Customer'))
 
 app.secret_key = 'some key that you will never guess'
 #Run the app on localhost port 5001 (changed from 5000 to avoid macOS AirPlay Receiver conflict)
